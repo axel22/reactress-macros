@@ -1,0 +1,4 @@
+<plugin>
+  <name>reactress</name>
+  <classname>org.reactress.plugin.ReactressPlugin</classname>
+</plugin>
