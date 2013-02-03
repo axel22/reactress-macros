@@ -7,7 +7,7 @@ import scala.reflect.macros.Context
 
 
 
-trait Mux extends Serializable {
+abstract class Mux extends Serializable {
 
   def dispatch(source: Reactive): Unit
 
@@ -17,8 +17,7 @@ trait Mux extends Serializable {
 object Mux {
 
   case object None extends Mux {
-    def dispatch(source: Reactive) {
-    }
+    def dispatch(source: Reactive) {}
   }
 
   case class Composite(ms: Array[Mux]) extends Mux {
@@ -27,9 +26,10 @@ object Mux {
     }
   }
 
-  trait Factory {
+  abstract class Factory {
     def merge(omux: Mux, nmux: Mux): Mux
   }
+
 
   class DefaultFactory extends Factory {
     def merge(omux: Mux, nmux: Mux): Mux = omux match {

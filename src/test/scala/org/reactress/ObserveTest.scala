@@ -6,7 +6,7 @@ import Mux.Default._
 
 
 
-object ObserverTest extends Reactive {
+object ObserveTest extends Reactive {
 
   @react var x = 1
 
