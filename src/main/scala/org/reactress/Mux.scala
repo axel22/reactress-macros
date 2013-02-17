@@ -11,6 +11,10 @@ abstract class Mux extends Serializable {
 
   def dispatch(source: Reactive): Unit
 
+  def union(mux: Mux): Mux
+
+  def diff(mux: Mux): Mux
+
 }
 
 
@@ -18,29 +22,37 @@ object Mux {
 
   case object None extends Mux {
     def dispatch(source: Reactive) {}
+    def union(mux: Mux) = mux
+    def diff(mux: Mux) = this
+  }
+
+  abstract class Simple extends Mux {
+    def union(mux: Mux) = Composite(Array(this, mux))
+    def diff(mux: Mux) = if (this eq mux) None else this
   }
 
   case class Composite(ms: Array[Mux]) extends Mux {
     def dispatch(source: Reactive) {
-      for (mux <- ms) mux.dispatch(source)
+      var i = 0
+      while (i < ms.length) {
+        ms(i).dispatch(source)
+        i += 1
+      }
     }
-  }
-
-  abstract class Factory {
-    def merge(omux: Mux, nmux: Mux): Mux
-  }
-
-
-  class DefaultFactory extends Factory {
-    def merge(omux: Mux, nmux: Mux): Mux = omux match {
-      case Mux.Composite(ms) => Mux.Composite(ms :+ nmux)
-      case _ => Mux.Composite(Array(omux, nmux))
+    def union(mux: Mux) = mux match {
+      case Composite(ns) => Composite(ms ++ ns)
+      case _ => Composite(ms :+ mux)
+    }
+    def diff(mux: Mux) = mux match {
+      case Composite(ns) =>
+        val nsmap = ns.toSet
+        Composite(ms.filter(!nsmap(_)))
+      case _ =>
+        Composite(ms.filter(_ ne mux))
     }
   }
 
   object Default {
-
-    implicit val factory = new DefaultFactory
 
     implicit def block2mux(block: =>Any): Mux = macro block2mux_impl
 
@@ -48,7 +60,7 @@ object Mux {
       import c.universe._
 
       reify {
-        new Mux {
+        new Mux.Simple {
           def dispatch(source: Reactive) {
             block.splice
           }

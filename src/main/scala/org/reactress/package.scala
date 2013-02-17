@@ -9,9 +9,9 @@ import scala.reflect.macros.Context
 
 package object reactress {
 
-  def observe[T](field: T)(body: Mux)(implicit f: Mux.Factory): Mux = macro observe_impl[T]
+  def observe[T](field: T)(body: Mux): Mux = macro observe_impl[T]
 
-  def observe_impl[T](c: Context)(field: c.Expr[T])(body: c.Expr[Mux])(f: c.Expr[Mux.Factory]): c.Expr[Mux] = {
+  def observe_impl[T](c: Context)(field: c.Expr[T])(body: c.Expr[Mux]): c.Expr[Mux] = {
     import c.universe._
 
     val (owner, muxname) = field.tree match {
@@ -31,7 +31,7 @@ package object reactress {
 
     val mux = c.Expr[Mux](Select(owner, muxname))
     val combined = reify {
-      f.splice.merge(mux.splice, body.splice)
+      mux.splice.union(body.splice)
     }
     val assign = c.Expr[Mux](Assign(mux.tree, combined.tree))
     reify {
