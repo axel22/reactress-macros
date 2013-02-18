@@ -2,11 +2,12 @@ package org.reactress
 
 
 
-import Mux.Default._
+import Mux0.Factory._
+import Mux2.Factory._
 
 
 
-object ObserveTest extends Reactive {
+object ObserveTest extends Reactive.Struct {
 
   @react var x = 1
 
@@ -14,6 +15,12 @@ object ObserveTest extends Reactive {
 
   observe(this.x) {
     println("!")
+  }
+
+  val table = new container.ReactMap[String, String]
+  
+  observe(table) {
+    (k: String, v: String) => println(k, v)
   }
 
 }

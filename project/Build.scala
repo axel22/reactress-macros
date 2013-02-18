@@ -9,11 +9,11 @@ object BuildSettings {
   val buildSettings = Defaults.defaultSettings ++ Seq (
     organization := "org.reactress",
     version := "0.0.1",
-    scalaVersion := "2.10.0-RC3",
+    scalaVersion := "2.10.0",
     libraryDependencies <+= scalaVersion { sv =>
       "org.scala-lang" % "scala-compiler" % sv
     },
-    libraryDependencies += "org.scalatest" % "scalatest_2.10.0-RC3" % "1.8-B1",
+    libraryDependencies += "org.scalatest" % "scalatest_2.10.0" % "1.8",
     scalacOptions += "",
     scalacOptions in Test <+= (Keys.`package` in Compile) map { artifact =>
       "-Xplugin:" + artifact

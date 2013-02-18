@@ -16,12 +16,12 @@ class ReactressPlugin(val global: Global) extends Plugin {
   val description = "generates reactive getters and setters"
   val components = List[PluginComponent](AddMuxComponent, SettersComponent)
   
-  val reactiveClass = definitions.getClass(newTermName(classOf[Reactive].getName))
+  val reactiveStructClass = definitions.getClass(newTermName(classOf[Reactive.Struct].getName))
   val reactAnnotSimpleName = newTypeName(classOf[react].getSimpleName)
   val reactAnnotName = newTypeName(classOf[react].getName)
   val reactAnnotation = definitions.getClass(reactAnnotName)
-  val muxClass = definitions.getClass(newTermName(classOf[Mux].getName))
-  val muxModule = muxClass.companionSymbol
+  val mux0Class = definitions.getClass(newTermName(classOf[Mux0].getName))
+  val mux0Module = mux0Class.companionSymbol
 
   private object AddMuxComponent extends PluginComponent with Transform {
     val global: ReactressPlugin.this.global.type = ReactressPlugin.this.global
@@ -42,7 +42,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
             case ValDef(mods, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
               val muxname = newTermName(name + "$mux")
               val mux = atPos(member.pos) {
-                ValDef(mods.copy(annotations = Nil), muxname, TypeTree(muxClass.tpe), Select(Ident(muxModule), newTermName("None")))
+                ValDef(mods.copy(annotations = Nil), muxname, TypeTree(mux0Class.tpe), Select(Ident(mux0Module), newTermName("None")))
               }
 
               List(member, mux)
@@ -61,7 +61,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
 
   private object SettersComponent extends PluginComponent with Transform {
     val global: ReactressPlugin.this.global.type = ReactressPlugin.this.global
-    override val runsAfter = List("typer")
+    override val runsAfter = List("refchecks")
     val phaseName = ReactressPlugin.this.name + "-setters"
 
     import global._
@@ -73,7 +73,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
       import reflect.internal.Flags.{getterFlags, setterFlags}
 
       override def transform(tree: Tree): Tree = tree match {
-        case impl @ Template(parents, self, body) =>
+        case impl @ Template(parents, self, body) if currentClass.tpe <:< reactiveStructClass.tpe =>
           val clazz = impl.symbol.owner
           val localTyper = typer.atOwner(impl, clazz)
 
