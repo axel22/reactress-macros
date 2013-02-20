@@ -7,7 +7,7 @@ import scala.reflect.macros.Context
 
 
 
-abstract class Mux1[@spec(Char, Int, Long, Double) T] extends Serializable {
+abstract class Mux1[@spec(Byte, Char, Int, Long, Double) T] extends Serializable {
 
   def dispatch(source: Reactive, msg: T): Unit
 
@@ -20,13 +20,13 @@ abstract class Mux1[@spec(Char, Int, Long, Double) T] extends Serializable {
 
 object Mux1 {
 
-  implicit def Mux1IsMux[@spec(Char, Int, Long, Double) T] = new IsMux[Mux1[T]] {
+  implicit def Mux1IsMux[@spec(Byte, Char, Int, Long, Double) T] = new IsMux[Mux1[T]] {
     def none = None[T]
     def union(m1: Mux1[T], m2: Mux1[T]) = m1 union m2
     def diff(m1: Mux1[T], m2: Mux1[T]) = m1 diff m2
   }
 
-  def None[@spec(Char, Int, Long, Double) T] = NoneImpl.asInstanceOf[Mux1[T]]
+  def None[@spec(Byte, Char, Int, Long, Double) T] = NoneImpl.asInstanceOf[Mux1[T]]
 
   private case object NoneImpl extends Mux1[Any] {
     def dispatch(source: Reactive, msg: Any) {}
@@ -34,12 +34,12 @@ object Mux1 {
     def diff(mux: Mux1[Any]) = this
   }
 
-  abstract class Simple[@spec(Char, Int, Long, Double) T] extends Mux1[T] {
+  abstract class Simple[@spec(Byte, Char, Int, Long, Double) T] extends Mux1[T] {
     def union(mux: Mux1[T]) = Composite(Array(this, mux))
     def diff(mux: Mux1[T]) = if (this eq mux) None[T] else this
   }
 
-  case class Composite[@spec(Char, Int, Long, Double) T](ms: Array[Mux1[T]]) extends Mux1[T] {
+  case class Composite[@spec(Byte, Char, Int, Long, Double) T](ms: Array[Mux1[T]]) extends Mux1[T] {
     def dispatch(source: Reactive, msg: T) {
       var i = 0
       while (i < ms.length) {
