@@ -14,9 +14,18 @@ class ReactMap[@spec(Int, Long) K, V](
   private var keytable: Array[K] = emptyKey.newEmptyArray(ReactMap.initSize)
   private var valtable: Array[V] = emptyVal.newEmptyArray(ReactMap.initSize)
   private var sz = 0
-  private var inserts = new Reactive.Source[Mux2[K, V]] {}
-  private var removes = new Reactive.Source[Mux2[K, V]] {}
-  private var sizes = new Reactive.Source[Mux1[Int]] {}
+  private var insertsource = new Reactive.Source[Mux2[K, V]] {}
+  private var removesource = new Reactive.Source[Mux2[K, V]] {}
+  private var sizesource = new Reactive.Source[Mux1[Int]] {}
+  private var clearsource = new Reactive.Source[Mux0] {}
+
+  def inserting = insertsource
+
+  def removing = removesource
+
+  def resizing = sizesource
+
+  def clearing = clearsource
 
   private def lookup(k: K): V = {
     var pos = index(k)
@@ -53,8 +62,8 @@ class ReactMap[@spec(Int, Long) K, V](
 
     if (!silent) {
       mux.dispatch(this, k, v)
-      inserts.mux.dispatch(this, k, v)
-      if (added) sizes.mux.dispatch(this, sz)
+      insertsource.mux.dispatch(this, k, v)
+      if (added) sizesource.mux.dispatch(this, sz)
     }
 
     previousValue
@@ -91,8 +100,8 @@ class ReactMap[@spec(Int, Long) K, V](
       sz -= 1
 
       mux.dispatch(this, k, emptyVal.nil)
-      removes.mux.dispatch(this, k, previousValue)
-      sizes.mux.dispatch(this, sz)
+      removesource.mux.dispatch(this, k, previousValue)
+      sizesource.mux.dispatch(this, sz)
 
       previousValue
     }
@@ -171,12 +180,19 @@ class ReactMap[@spec(Int, Long) K, V](
         sz -= 1
 
         mux.dispatch(this, k, emptyVal.nil)
-        removes.mux.dispatch(this, k, v)
-        sizes.mux.dispatch(this, sz)
+        removesource.mux.dispatch(this, k, v)
+        sizesource.mux.dispatch(this, sz)
       }
 
       pos += 1
     }
+  }
+
+  def clearAtomic() {
+    keytable = emptyKey.newEmptyArray(ReactMap.initSize)
+    valtable = emptyVal.newEmptyArray(ReactMap.initSize)
+    sz = 0
+    clearsource.mux.dispatch(this)
   }
 
   def size: Int = sz
