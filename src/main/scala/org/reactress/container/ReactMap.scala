@@ -16,16 +16,16 @@ class ReactMap[@spec(Int, Long) K, V](
   private var sz = 0
   private var insertsource = new Reactive.Source[Mux2[K, V]] {}
   private var removesource = new Reactive.Source[Mux2[K, V]] {}
-  private var sizesource = new Reactive.Source[Mux1[Int]] {}
-  private var clearsource = new Reactive.Source[Mux0] {}
+  private var resizesource = new Reactive.Source[Mux1[Int]] {}
+  private var aclearsource = new Reactive.Source[Mux0] {}
 
-  def inserting = insertsource
+  def inserts = insertsource
 
-  def removing = removesource
+  def removes = removesource
 
-  def resizing = sizesource
+  def resizes = resizesource
 
-  def clearing = clearsource
+  def atomicClears = aclearsource
 
   private def lookup(k: K): V = {
     var pos = index(k)
@@ -63,7 +63,7 @@ class ReactMap[@spec(Int, Long) K, V](
     if (!silent) {
       mux.dispatch(this, k, v)
       insertsource.mux.dispatch(this, k, v)
-      if (added) sizesource.mux.dispatch(this, sz)
+      if (added) resizesource.mux.dispatch(this, sz)
     }
 
     previousValue
@@ -101,7 +101,7 @@ class ReactMap[@spec(Int, Long) K, V](
 
       mux.dispatch(this, k, emptyVal.nil)
       removesource.mux.dispatch(this, k, previousValue)
-      sizesource.mux.dispatch(this, sz)
+      resizesource.mux.dispatch(this, sz)
 
       previousValue
     }
@@ -181,7 +181,7 @@ class ReactMap[@spec(Int, Long) K, V](
 
         mux.dispatch(this, k, emptyVal.nil)
         removesource.mux.dispatch(this, k, v)
-        sizesource.mux.dispatch(this, sz)
+        resizesource.mux.dispatch(this, sz)
       }
 
       pos += 1
@@ -192,7 +192,7 @@ class ReactMap[@spec(Int, Long) K, V](
     keytable = emptyKey.newEmptyArray(ReactMap.initSize)
     valtable = emptyVal.newEmptyArray(ReactMap.initSize)
     sz = 0
-    clearsource.mux.dispatch(this)
+    aclearsource.mux.dispatch(this)
   }
 
   def size: Int = sz
