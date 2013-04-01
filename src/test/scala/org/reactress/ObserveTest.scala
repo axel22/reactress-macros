@@ -8,19 +8,23 @@ import Mux2.Factory._
 
 
 object ObserveTest extends Reactive.Struct {
-
+  
   @react var x = 1
 
   var y = 2
 
   observe(this.x) {
-    println("!")
+    (ot: ObserveTest.type) => println("!")
+  }
+
+  observe(this.x) {
+    println("x changed: " + this.x)
   }
 
   val table = new container.ReactMap[String, String]
   
   observe(table) {
-    (k: String, v: String) => println(k, v)
+    (t: Reactive, k: String, v: String) => (println(k, v): Any)
   }
 
 }

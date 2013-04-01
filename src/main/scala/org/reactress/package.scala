@@ -9,12 +9,12 @@ import scala.reflect.macros.Context
 
 package object reactress {
 
-  def observe[T](field: T)(body: Mux0): Mux0 = macro ObserveImplementations.field[T]
+  def observe[S <: Reactive, T](field: T)(body: Mux0[S]): Mux0[S] = macro ObserveImplementations.field[S, T]
 
   def observe[M](source: Reactive.Source[M])(body: M)(implicit ismux: IsMux[M]): M = macro ObserveImplementations.source[M]
 
   object ObserveImplementations {
-    def field[T](c: Context)(field: c.Expr[T])(body: c.Expr[Mux0]): c.Expr[Mux0] = {
+    def field[S <: Reactive, T](c: Context)(field: c.Expr[T])(body: c.Expr[Mux0[S]]): c.Expr[Mux0[S]] = {
       import c.universe._
   
       val (owner, muxname) = field.tree match {
@@ -32,7 +32,7 @@ package object reactress {
           return reify { null }
       }
   
-      val selectmux = c.Expr[Mux0](Select(owner, muxname))
+      val selectmux = c.Expr[Mux0[S]](Select(owner, muxname))
       val localName = newTermName("muxbody$0")
       val unionName = newTermName("union")
       val block = Block(
@@ -61,13 +61,13 @@ package object reactress {
 
   type spec = specialized
 
-  type DefaultMux0 = Mux0.Simple
+  type SimpleMux0[S <: Reactive] = Mux0.Simple[S]
 
-  type DefaultMux1[T] = Mux1.Simple[T]
+  type SimpleMux1[T] = Mux1.Simple[T]
 
-  type DefaultMux2[P, Q] = Mux2.Simple[P, Q]
+  type SimpleMux2[P, Q] = Mux2.Simple[P, Q]
 
-  type DefaultMux3[P, Q, R] = Mux3.Simple[P, Q, R]
+  type SimpleMux3[P, Q, R] = Mux3.Simple[P, Q, R]
 
 }
 

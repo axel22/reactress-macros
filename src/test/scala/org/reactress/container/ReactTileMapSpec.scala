@@ -56,7 +56,7 @@ class ReactTileMapSpec extends FlatSpec with ShouldMatchers {
     val table = new ReactTileMap[Int](1024, 0)
     for (x <- 0 until big by 2; y <- 0 until big by 2) table(x, y) = 1
 
-    table.clearAtomic()
+    table.clear()
     assert(table(600, 150) == 0)
     assert(table.quadRoot.isLeaf)
   }

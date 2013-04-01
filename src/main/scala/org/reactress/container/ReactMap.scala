@@ -17,15 +17,12 @@ class ReactMap[@spec(Int, Long) K, V](
   private var insertsource = new Reactive.Source[Mux2[K, V]] {}
   private var removesource = new Reactive.Source[Mux2[K, V]] {}
   private var resizesource = new Reactive.Source[Mux1[Int]] {}
-  private var aclearsource = new Reactive.Source[Mux0] {}
 
   def inserts = insertsource
 
   def removes = removesource
 
   def resizes = resizesource
-
-  def atomicClears = aclearsource
 
   private def lookup(k: K): V = {
     var pos = index(k)
@@ -186,13 +183,6 @@ class ReactMap[@spec(Int, Long) K, V](
 
       pos += 1
     }
-  }
-
-  def clearAtomic() {
-    keytable = emptyKey.newEmptyArray(ReactMap.initSize)
-    valtable = emptyVal.newEmptyArray(ReactMap.initSize)
-    sz = 0
-    aclearsource.mux.dispatch(this)
   }
 
   def size: Int = sz

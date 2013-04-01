@@ -20,7 +20,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
   val reactAnnotSimpleName = newTypeName(classOf[react].getSimpleName)
   val reactAnnotName = newTypeName(classOf[react].getName)
   val reactAnnotation = definitions.getClass(reactAnnotName)
-  val mux0Class = definitions.getClass(newTermName(classOf[Mux0].getName))
+  val mux0Class = definitions.getClass(newTermName(classOf[Mux0[_]].getName))
   val mux0Module = mux0Class.companionSymbol
 
   private object AddMuxComponent extends PluginComponent with Transform {
@@ -36,22 +36,29 @@ class ReactressPlugin(val global: Global) extends Plugin {
     class ReactressTransformer extends Transformer {
       import Flag._
 
+      def transformTemplate(classname: Name, parents: List[Tree], self: ValDef, body: List[Tree]): Template = {
+        val nbody = for (member <- body) yield member match {
+          case ValDef(mods, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
+            val muxname = newTermName(name + "$mux")
+            val mux = atPos(member.pos) {
+              val tpetree = TypeTree()
+              val init = TypeApply(Select(Ident(mux0Module), newTermName("None")), List(Ident(classname)))
+              ValDef(mods.copy(annotations = Nil), muxname, tpetree, init)
+            }
+            List(member, mux)
+          case m =>
+            List(m)
+        }
+
+        val ntemplate = Template(parents, self, nbody.flatten)
+        super.transform(ntemplate).asInstanceOf[Template]
+      }
+
       override def transform(tree: Tree): Tree = tree match {
-        case Template(parents, self, body) =>
-          val nbody = for (member <- body) yield member match {
-            case ValDef(mods, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
-              val muxname = newTermName(name + "$mux")
-              val mux = atPos(member.pos) {
-                ValDef(mods.copy(annotations = Nil), muxname, TypeTree(mux0Class.tpe), Select(Ident(mux0Module), newTermName("None")))
-              }
-
-              List(member, mux)
-            case m =>
-              List(m)
-          }
-
-          val ntemplate = Template(parents, self, nbody.flatten)
-          super.transform(ntemplate)
+        case ModuleDef(mods, name, Template(parents, self, body)) =>
+          ModuleDef(mods, name, transformTemplate(name, parents, self, body))
+        case ClassDef(mods, name, tparams, Template(parents, self, body)) =>
+          ClassDef(mods, name, tparams, transformTemplate(name, parents, self, body))
         case t =>
           super.transform(t)
       }

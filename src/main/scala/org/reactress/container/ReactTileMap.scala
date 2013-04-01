@@ -16,7 +16,7 @@ class ReactTileMap[@spec(Byte, Int, Long, Double) T: ClassTag](
   private var sz = nextPow2(size0)
   private var dflt = default0
   private var root: Node[T] = new Node.Leaf(dflt)
-  private var clearsource = new Reactive.Source[Mux0] {}
+  private var clearsource = new Reactive.Source[Mux0[ReactTileMap[T]]] {}
 
   private[reactress] def quadRoot = root
 
@@ -32,7 +32,7 @@ class ReactTileMap[@spec(Byte, Int, Long, Double) T: ClassTag](
     mux.dispatch(this, x, y, elem)
   }
   
-  def clearAtomic() = {
+  def clear() = {
     root = new Node.Leaf(dflt)
     clearsource.mux.dispatch(this)
   }

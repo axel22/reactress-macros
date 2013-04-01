@@ -62,15 +62,17 @@ object Mux2 {
 
   object Factory {
 
-    implicit def block2mux2[P, Q](block: (P, Q) => Any): Mux2[P, Q] = macro block2mux_impl[P, Q]
+    def mux[P, Q](block: (Reactive, P, Q) => Any): Mux2[P, Q] = macro mux_impl[P, Q]
 
-    def block2mux_impl[P: c.WeakTypeTag, Q: c.WeakTypeTag](c: Context)(block: c.Expr[(P, Q) => Any]): c.Expr[Mux2[P, Q]] = {
+    implicit def mux2[P, Q](block: (Reactive, P, Q) => Any): Mux2[P, Q] = macro mux_impl[P, Q]
+
+    def mux_impl[P: c.WeakTypeTag, Q: c.WeakTypeTag](c: Context)(block: c.Expr[(Reactive, P, Q) => Any]): c.Expr[Mux2[P, Q]] = {
       import c.universe._
 
       val mux = reify {
-        new DefaultMux2[P, Q] {
+        new SimpleMux2[P, Q] {
           def dispatch(source: Reactive, mp: P, mq: Q) {
-            block.splice(mp, mq)
+            block.splice(source, mp, mq)
           }
         }
       }
