@@ -61,13 +61,13 @@ package object reactress {
 
   type spec = specialized
 
-  type SimpleMux0[S <: Reactive] = Mux0.Simple[S]
+  type SimpleMux0[Source <: Reactive] = Mux0.Simple[Source]
 
-  type SimpleMux1[T] = Mux1.Simple[T]
+  type SimpleMux1[Source <: Reactive, T] = Mux1.Simple[Source, T]
 
-  type SimpleMux2[P, Q] = Mux2.Simple[P, Q]
+  type SimpleMux2[Source <: Reactive, P, Q] = Mux2.Simple[Source, P, Q]
 
-  type SimpleMux3[P, Q, R] = Mux3.Simple[P, Q, R]
+  type SimpleMux3[Source <: Reactive, P, Q, R] = Mux3.Simple[Source, P, Q, R]
 
 }
 

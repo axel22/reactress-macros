@@ -7,71 +7,71 @@ import scala.reflect.macros.Context
 
 
 
-abstract class Mux1[@spec(Byte, Char, Int, Long, Double) T] extends Serializable {
+abstract class Mux1[Source <: Reactive, @spec(Byte, Char, Int, Long, Double) T] extends Serializable {
 
-  def dispatch(source: Reactive, msg: T): Unit
+  def dispatch(source: Source, msg: T): Unit
 
-  def union(mux: Mux1[T]): Mux1[T]
+  def union(mux: Mux1[Source, T]): Mux1[Source, T]
 
-  def diff(mux: Mux1[T]): Mux1[T]
+  def diff(mux: Mux1[Source, T]): Mux1[Source, T]
 
 }
 
 
 object Mux1 {
 
-  implicit def Mux1IsMux[@spec(Byte, Char, Int, Long, Double) T] = new IsMux[Mux1[T]] {
-    def none = None[T]
-    def union(m1: Mux1[T], m2: Mux1[T]) = m1 union m2
-    def diff(m1: Mux1[T], m2: Mux1[T]) = m1 diff m2
+  implicit def Mux1IsMux[Source <: Reactive, @spec(Byte, Char, Int, Long, Double) T] = new IsMux[Mux1[Source, T]] {
+    def none = None[Source, T]
+    def union(m1: Mux1[Source, T], m2: Mux1[Source, T]) = m1 union m2
+    def diff(m1: Mux1[Source, T], m2: Mux1[Source, T]) = m1 diff m2
   }
 
-  def None[@spec(Byte, Char, Int, Long, Double) T] = NoneImpl.asInstanceOf[Mux1[T]]
+  def None[Source <: Reactive, @spec(Byte, Char, Int, Long, Double) T] = NoneImpl.asInstanceOf[Mux1[Source, T]]
 
-  private case object NoneImpl extends Mux1[Any] {
+  private case object NoneImpl extends Mux1[Reactive, Any] {
     def dispatch(source: Reactive, msg: Any) {}
-    def union(mux: Mux1[Any]) = mux
-    def diff(mux: Mux1[Any]) = this
+    def union(mux: Mux1[Reactive, Any]) = mux
+    def diff(mux: Mux1[Reactive, Any]) = this
   }
 
-  abstract class Simple[@spec(Byte, Char, Int, Long, Double) T] extends Mux1[T] {
-    def union(mux: Mux1[T]) = Composite(Array(this, mux))
-    def diff(mux: Mux1[T]) = if (this eq mux) None[T] else this
+  abstract class Simple[Source <: Reactive, @spec(Byte, Char, Int, Long, Double) T] extends Mux1[Source, T] {
+    def union(mux: Mux1[Source, T]) = new Composite(Array(this, mux))
+    def diff(mux: Mux1[Source, T]) = if (this eq mux) None[Source, T] else this
   }
 
-  case class Composite[@spec(Byte, Char, Int, Long, Double) T](ms: Array[Mux1[T]]) extends Mux1[T] {
-    def dispatch(source: Reactive, msg: T) {
+  class Composite[Source <: Reactive, @spec(Byte, Char, Int, Long, Double) T](val ms: Array[Mux1[Source, T]]) extends Mux1[Source, T] {
+    def dispatch(source: Source, msg: T) {
       var i = 0
       while (i < ms.length) {
         ms(i).dispatch(source, msg)
         i += 1
       }
     }
-    def union(mux: Mux1[T]) = mux match {
-      case Composite(ns) => Composite(ms ++ ns)
-      case _ => Composite(ms :+ mux)
+    def union(mux: Mux1[Source, T]) = mux match {
+      case c: Composite[Source, T] => new Composite(ms ++ c.ms)
+      case _ => new Composite(ms :+ mux)
     }
-    def diff(mux: Mux1[T]) = mux match {
-      case Composite(ns) =>
-        val nsmap = ns.toSet
-        Composite(ms.filter(!nsmap(_)))
+    def diff(mux: Mux1[Source, T]) = mux match {
+      case c: Composite[Source, T] =>
+        val nsmap = c.ms.toSet
+        new Composite(ms.filter(!nsmap(_)))
       case _ =>
-        Composite(ms.filter(_ ne mux))
+        new Composite(ms.filter(_ ne mux))
     }
   }
 
   object Factory {
 
-    def mux[T](block: (Reactive, T) => Any): Mux1[T] = macro block2mux_impl[T]
+    def mux[Source <: Reactive, T](block: (Source, T) => Any): Mux1[Source, T] = macro block2mux_impl[Source, T]
 
-    implicit def mux1[T](block: (Reactive, T) => Any): Mux1[T] = macro block2mux_impl[T]
+    implicit def mux1[Source <: Reactive, T](block: (Source, T) => Any): Mux1[Source, T] = macro block2mux_impl[Source, T]
 
-    def block2mux_impl[T: c.WeakTypeTag](c: Context)(block: c.Expr[(Reactive, T) => Any]): c.Expr[Mux1[T]] = {
+    def block2mux_impl[Source <: Reactive: c.WeakTypeTag, T: c.WeakTypeTag](c: Context)(block: c.Expr[(Source, T) => Any]): c.Expr[Mux1[Source, T]] = {
       import c.universe._
 
       val mux = reify {
-        new SimpleMux1[T] {
-          def dispatch(source: Reactive, msg: T) {
+        new SimpleMux1[Source, T] {
+          def dispatch(source: Source, msg: T) {
             block.splice(source, msg)
           }
         }

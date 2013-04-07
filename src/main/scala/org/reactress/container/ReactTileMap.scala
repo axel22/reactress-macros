@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 class ReactTileMap[@spec(Byte, Int, Long, Double) T: ClassTag](
   size0: Int,
   default0: T
-) extends Reactive.Source[Mux3[Int, Int, T]] {
+) extends Reactive.Source[Mux3[ReactTileMap[T], Int, Int, T]] {
   import ReactTileMap._
 
   private var sz = nextPow2(size0)

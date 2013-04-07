@@ -46,8 +46,11 @@ class ReactressPlugin(val global: Global) extends Plugin {
               ValDef(mods.copy(annotations = Nil), muxname, tpetree, init)
             }
             List(member, mux)
-          case m =>
-            List(m)
+          case DefDef(mods, tps, vps, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
+            val muxname = newTermName(name + "$mux")
+            List(member)
+          case _ =>
+            List(member)
         }
 
         val ntemplate = Template(parents, self, nbody.flatten)

@@ -24,8 +24,10 @@ object ObserveTest extends Reactive.Struct {
   val table = new container.ReactMap[String, String]
   
   observe(table) {
-    (t: Reactive, k: String, v: String) => (println(k, v): Any)
+    (t: container.ReactMap[String, String], k: String, v: String) => (println(k, v): Any)
   }
+
+  @react def pulse(x: Int): Int = 1
 
 }
 

@@ -10,13 +10,13 @@ import scala.reflect.ClassTag
 class ReactMap[@spec(Int, Long) K, V](
   implicit val emptyKey: ReactMap.Empty[K],
   implicit val emptyVal: ReactMap.Empty[V]
-) extends Reactive.Source[Mux2[K, V]] {
+) extends Reactive.Source[Mux2[ReactMap[K, V], K, V]] {
   private var keytable: Array[K] = emptyKey.newEmptyArray(ReactMap.initSize)
   private var valtable: Array[V] = emptyVal.newEmptyArray(ReactMap.initSize)
   private var sz = 0
-  private var insertsource = new Reactive.Source[Mux2[K, V]] {}
-  private var removesource = new Reactive.Source[Mux2[K, V]] {}
-  private var resizesource = new Reactive.Source[Mux1[Int]] {}
+  private var insertsource = new Reactive.Source[Mux2[ReactMap[K, V], K, V]] {}
+  private var removesource = new Reactive.Source[Mux2[ReactMap[K, V], K, V]] {}
+  private var resizesource = new Reactive.Source[Mux1[ReactMap[K, V], Int]] {}
 
   def inserts = insertsource
 

@@ -63,11 +63,11 @@ object Mux0 {
 
   object Factory {
 
-    def mux[S <: Reactive](block: =>Any): Mux0[S] = macro muxblock_impl[S]
+    def mux[S <: Reactive](block: =>Any): Mux0[S] = macro block2mux_impl[S]
 
-    implicit def mux0[S <: Reactive](block: =>Any): Mux0[S] = macro muxblock_impl[S]
+    implicit def mux0[S <: Reactive](block: =>Any): Mux0[S] = macro block2mux_impl[S]
 
-    def muxblock_impl[S <: Reactive: c.WeakTypeTag](c: Context)(block: c.Expr[Any]): c.Expr[Mux0[S]] = {
+    def block2mux_impl[S <: Reactive: c.WeakTypeTag](c: Context)(block: c.Expr[Any]): c.Expr[Mux0[S]] = {
       import c.universe._
 
       reify {
@@ -79,11 +79,11 @@ object Mux0 {
       }
     }
 
-    def mux[S <: Reactive](block: S => Any): Mux0[S] = macro muxfunc_impl[S]
+    def mux[S <: Reactive](block: S => Any): Mux0[S] = macro func2mux_impl[S]
 
-    implicit def mux0[S <: Reactive](block: S => Any): Mux0[S] = macro muxfunc_impl[S]
+    implicit def mux0[S <: Reactive](block: S => Any): Mux0[S] = macro func2mux_impl[S]
 
-    def muxfunc_impl[S <: Reactive: c.WeakTypeTag](c: Context)(block: c.Expr[S => Any]): c.Expr[Mux0[S]] = {
+    def func2mux_impl[S <: Reactive: c.WeakTypeTag](c: Context)(block: c.Expr[S => Any]): c.Expr[Mux0[S]] = {
       import c.universe._
 
       val mux = reify {
