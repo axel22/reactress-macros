@@ -14,7 +14,7 @@ trait Reactive extends Serializable {
 
   def observe[P, Q](method: P => Q)(body: Mux2[this.type, P, Q]): Mux2[this.type, P, Q] = macro ObserveImplementations.method1[this.type, P, Q]
 
-  def observe[Source <: Reactive, P, Q, R](method: (P, Q) => R)(body: Mux3[Source, P, Q, R]): Mux3[Source, P, Q, R] = macro ObserveImplementations.method2[Source, P, Q, R]
+  def observe[P, Q, R](method: (P, Q) => R)(body: Mux3[this.type, P, Q, R]): Mux3[this.type, P, Q, R] = macro ObserveImplementations.method2[this.type, P, Q, R]
 
   def observe[M](source: Reactive.Source[M])(body: M)(implicit ismux: IsMux[M]): M = macro ObserveImplementations.source[M]
   
