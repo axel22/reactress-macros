@@ -15,6 +15,8 @@ package object reactress {
 
   def observe[Source <: Reactive, P, Q](method: P => Q)(body: Mux2[Source, P, Q]): Mux2[Source, P, Q] = macro ObserveImplementations.method1[Source, P, Q]
 
+  def observe[Source <: Reactive, P, Q, R](method: (P, Q) => R)(body: Mux3[Source, P, Q, R]): Mux3[Source, P, Q, R] = macro ObserveImplementations.method2[Source, P, Q, R]
+
   def observe[M](source: Reactive.Source[M])(body: M)(implicit ismux: IsMux[M]): M = macro ObserveImplementations.source[M]
 
   object ObserveImplementations {
@@ -68,6 +70,36 @@ package object reactress {
       }
   
       val selectmux = c.Expr[Mux2[Source, P, Q]](Select(owner, muxname))
+      val localName = newTermName("muxbody$0")
+      val unionName = newTermName("union")
+      val block = Block(
+        ValDef(Modifiers(), localName, TypeTree(), body.tree),
+        Assign(selectmux.tree, Apply(Select(selectmux.tree, unionName), List(Ident(localName)))),
+        Ident(localName)
+      )
+      c.Expr(block)
+    }
+
+    def method2[Source <: Reactive, P, Q, R](c: Context)(method: c.Expr[(P, Q) => R])(body: c.Expr[Mux3[Source, P, Q, R]]): c.Expr[Mux3[Source, P, Q, R]] = {
+      import c.universe._
+
+      val (owner, muxname) = method.tree match {
+        case Block(stats, Function(_, Apply(Select(q, n), _))) =>
+          val muxname = newTermName(n + "$mux")
+          q.symbol.typeSignature.member(muxname) match {
+            case NoSymbol =>
+              c.error(c.enclosingPosition, "Can only observe reactive methods.")
+              return reify { null }
+            case m =>
+              (q, muxname)
+          }
+        case _ =>
+          println(method.tree.getClass)
+          c.error(c.enclosingPosition, "Must use `object.method _` to refer to a reactive method.")
+          return reify { null }
+      }
+  
+      val selectmux = c.Expr[Mux3[Source, P, Q, R]](Select(owner, muxname))
       val localName = newTermName("muxbody$0")
       val unionName = newTermName("union")
       val block = Block(
