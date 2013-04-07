@@ -3,31 +3,34 @@ package org.reactress
 
 
 import Mux0.Factory._
+import Mux1.Factory._
 import Mux2.Factory._
 
 
 
-object ObserveTest extends Reactive.Struct {
+object ObserveTest extends Reactive {
   
   @react var x = 1
-
-  var y = 2
 
   observe(this.x) {
     (ot: ObserveTest.type) => println("!")
   }
 
-  observe(this.x) {
-    println("x changed: " + this.x)
+  @react def pulse() {}
+
+  pulse()
+
+  observe(this.pulse _) {
+    (ot: ObserveTest.type, u: Unit) => println("Pulsed!")
   }
 
-  val table = new container.ReactMap[String, String]
-  
-  observe(table) {
-    (t: container.ReactMap[String, String], k: String, v: String) => (println(k, v): Any)
-  }
+  pulse()
 
-  @react def pulse(x: Int): Int = 1
+  @react def inc(x: Int): Int = x + 1
+
+  observe(this.inc _) {
+    (ot: ObserveTest.type, x: Int, res: Int) => println(x + " incremented: " + res)
+  }
 
 }
 

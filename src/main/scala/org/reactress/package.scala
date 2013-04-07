@@ -9,12 +9,76 @@ import scala.reflect.macros.Context
 
 package object reactress {
 
-  def observe[S <: Reactive, T](field: T)(body: Mux0[S]): Mux0[S] = macro ObserveImplementations.field[S, T]
+  def observe[Source <: Reactive, T](field: T)(body: Mux0[Source]): Mux0[Source] = macro ObserveImplementations.field[Source, T]
+
+  def observe[Source <: Reactive, T](method: () => T)(body: Mux1[Source, T]): Mux1[Source, T] = macro ObserveImplementations.method0[Source, T]
+
+  def observe[Source <: Reactive, P, Q](method: P => Q)(body: Mux2[Source, P, Q]): Mux2[Source, P, Q] = macro ObserveImplementations.method1[Source, P, Q]
 
   def observe[M](source: Reactive.Source[M])(body: M)(implicit ismux: IsMux[M]): M = macro ObserveImplementations.source[M]
 
   object ObserveImplementations {
-    def field[S <: Reactive, T](c: Context)(field: c.Expr[T])(body: c.Expr[Mux0[S]]): c.Expr[Mux0[S]] = {
+    def method0[Source <: Reactive, T](c: Context)(method: c.Expr[() => T])(body: c.Expr[Mux1[Source, T]]): c.Expr[Mux1[Source, T]] = {
+      import c.universe._
+
+      val (owner, muxname) = method.tree match {
+        case Block(stats, Function(_, Apply(Select(q, n), _))) =>
+          val muxname = newTermName(n + "$mux")
+          q.symbol.typeSignature.member(muxname) match {
+            case NoSymbol =>
+              c.error(c.enclosingPosition, "Can only observe reactive methods.")
+              return reify { null }
+            case m =>
+              (q, muxname)
+          }
+        case _ =>
+          println(method.tree.getClass)
+          c.error(c.enclosingPosition, "Must use `object.method _` to refer to a reactive method.")
+          return reify { null }
+      }
+  
+      val selectmux = c.Expr[Mux1[Source, T]](Select(owner, muxname))
+      val localName = newTermName("muxbody$0")
+      val unionName = newTermName("union")
+      val block = Block(
+        ValDef(Modifiers(), localName, TypeTree(), body.tree),
+        Assign(selectmux.tree, Apply(Select(selectmux.tree, unionName), List(Ident(localName)))),
+        Ident(localName)
+      )
+      c.Expr(block)
+    }
+
+    def method1[Source <: Reactive, P, Q](c: Context)(method: c.Expr[P => Q])(body: c.Expr[Mux2[Source, P, Q]]): c.Expr[Mux2[Source, P, Q]] = {
+      import c.universe._
+
+      val (owner, muxname) = method.tree match {
+        case Block(stats, Function(_, Apply(Select(q, n), _))) =>
+          val muxname = newTermName(n + "$mux")
+          q.symbol.typeSignature.member(muxname) match {
+            case NoSymbol =>
+              c.error(c.enclosingPosition, "Can only observe reactive methods.")
+              return reify { null }
+            case m =>
+              (q, muxname)
+          }
+        case _ =>
+          println(method.tree.getClass)
+          c.error(c.enclosingPosition, "Must use `object.method _` to refer to a reactive method.")
+          return reify { null }
+      }
+  
+      val selectmux = c.Expr[Mux2[Source, P, Q]](Select(owner, muxname))
+      val localName = newTermName("muxbody$0")
+      val unionName = newTermName("union")
+      val block = Block(
+        ValDef(Modifiers(), localName, TypeTree(), body.tree),
+        Assign(selectmux.tree, Apply(Select(selectmux.tree, unionName), List(Ident(localName)))),
+        Ident(localName)
+      )
+      c.Expr(block)
+    }
+
+    def field[Source <: Reactive, T](c: Context)(field: c.Expr[T])(body: c.Expr[Mux0[Source]]): c.Expr[Mux0[Source]] = {
       import c.universe._
   
       val (owner, muxname) = field.tree match {
@@ -32,7 +96,7 @@ package object reactress {
           return reify { null }
       }
   
-      val selectmux = c.Expr[Mux0[S]](Select(owner, muxname))
+      val selectmux = c.Expr[Mux0[Source]](Select(owner, muxname))
       val localName = newTermName("muxbody$0")
       val unionName = newTermName("union")
       val block = Block(
@@ -74,7 +138,7 @@ package object reactress {
 
 package reactress {
 
-  final class react extends scala.annotation.Annotation
+  final class react extends scala.annotation.StaticAnnotation
 
   trait IsMux[M] {
     def none: M
