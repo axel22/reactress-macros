@@ -23,21 +23,11 @@ class ObserveTest extends Reactive.Struct[ObserveTest] {
     u: Unit => println("pulsed!")
   }
 
-  // observe(this.x) {
-  //   (ot: ObserveTest.type) => println("!")
-  // }
-
-  // observe(this.pulse _) {
-  //   (ot: ObserveTest.type, u: Unit) => println("Pulsed!")
-  // }
-
-  pulse()
-
   @react def inc(x: Int): Int = x + 1
 
-  // observe(this.inc _) {
-  //   (ot: ObserveTest.type, x: Int, res: Int) => println(x + " incremented: " + res)
-  // }
+  val z = map(inc _)(0) {
+    (x: Int, res: Int) => res
+  }
 
 }
 
