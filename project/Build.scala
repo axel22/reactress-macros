@@ -5,33 +5,37 @@ import java.io.File
 
 
 
-object BuildSettings {
-  val buildSettings = Defaults.defaultSettings ++ Seq (
+object ReactressBuild extends Build {
+  val macroSettings = Defaults.defaultSettings ++ Seq (
     organization := "org.reactress",
     version := "0.0.1",
-    scalaVersion := "2.10.0",
+    scalaVersion := "2.10.1",
     libraryDependencies <+= scalaVersion { sv =>
       "org.scala-lang" % "scala-compiler" % sv
     },
-    libraryDependencies += "org.scalatest" % "scalatest_2.10.0" % "1.8",
-    scalacOptions += "",
-    scalacOptions in Test <+= (Keys.`package` in Compile) map { artifact =>
+    scalacOptions += ""
+  )
+
+  lazy val reactressMacros = Project(
+    "reactress-macros",
+    file("macro"),
+    settings = macroSettings
+  )
+
+  val reactressSettings = Defaults.defaultSettings ++ Seq (
+    organization := "org.reactress",
+    version := "0.0.1",
+    scalaVersion := "2.10.1",
+    libraryDependencies += "org.scalatest" % "scalatest_2.10" % "1.9.1",
+    scalacOptions <+= (Keys.`package` in (reactressMacros, Compile)) map { artifact =>
       "-Xplugin:" + artifact
     }
   )
-}
-
-
-object ReactressBuild extends Build {
-  import BuildSettings._
-
-  /* projects */
 
   lazy val reactress = Project(
     "reactress",
     file("."),
-    settings = buildSettings
-  ) dependsOn (
-  )
+    settings = reactressSettings
+  ) dependsOn(reactressMacros)
 
 }

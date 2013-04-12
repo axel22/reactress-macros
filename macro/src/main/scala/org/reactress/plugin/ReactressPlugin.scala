@@ -17,7 +17,6 @@ class ReactressPlugin(val global: Global) extends Plugin {
   val components = List[PluginComponent](AddMuxComponent, RewritesComponent)
   
   val reactiveClass = definitions.getClass(newTermName(classOf[Reactive].getName))
-  val reactiveStructClass = definitions.getClass(newTermName(classOf[Reactive.Struct].getName))
   val reactAnnotSimpleName = newTypeName(classOf[react].getSimpleName)
   val reactAnnotName = newTypeName(classOf[react].getName)
   val reactAnnotation = definitions.getClass(reactAnnotName)
@@ -25,10 +24,12 @@ class ReactressPlugin(val global: Global) extends Plugin {
   val mux1Class = definitions.getClass(newTermName(classOf[Mux1[_, _]].getName))
   val mux2Class = definitions.getClass(newTermName(classOf[Mux2[_, _, _]].getName))
   val mux3Class = definitions.getClass(newTermName(classOf[Mux3[_, _, _, _]].getName))
+  val mux4Class = definitions.getClass(newTermName(classOf[Mux4[_, _, _, _, _]].getName))
   val mux0Module = mux0Class.companionSymbol
   val mux1Module = mux1Class.companionSymbol
   val mux2Module = mux2Class.companionSymbol
   val mux3Module = mux3Class.companionSymbol
+  val mux4Module = mux4Class.companionSymbol
   val observeName = newTermName("observe")
 
   private object AddMuxComponent extends PluginComponent with Transform {
@@ -44,7 +45,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
     class ReactressTransformer(unit: CompilationUnit) extends Transformer {
       import Flag._
 
-      def transformTemplate(classname: Name, parents: List[Tree], self: ValDef, body: List[Tree]): Template = {
+      def transformTemplate(classname: Name, tparams: List[TypeDef], parents: List[Tree], self: ValDef, body: List[Tree]): Template = {
         val nbody = for (member <- body) yield member match {
           case ValDef(mods, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
             val muxname = newTermName(name + "$mux")
@@ -56,17 +57,20 @@ class ReactressPlugin(val global: Global) extends Plugin {
             List(member, mux)
           case DefDef(mods, name, tps, vps, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
             val muxname = newTermName(name + "$mux")
+            def flatType(tree: Tree, tps: List[TypeDef]): Tree = if (tps.isEmpty) tree else AppliedTypeTree(tree, tps.map(t => flatType(Ident(t.name), t.tparams)))
             val mux = atPos(member.pos) {
               val tpetree = TypeTree()
               val init = vps.flatten match {
                 case Nil =>
-                  TypeApply(Select(Ident(mux1Module), newTermName("None")), List(Ident(classname), tpe))
+                  TypeApply(Select(Ident(mux1Module), newTermName("None")), List(flatType(Ident(classname), tparams), tpe))
                 case ValDef(_, _, tp1, _) :: Nil =>
-                  TypeApply(Select(Ident(mux2Module), newTermName("None")), List(Ident(classname), tp1, tpe))
+                  TypeApply(Select(Ident(mux2Module), newTermName("None")), List(flatType(Ident(classname), tparams), tp1, tpe))
                 case ValDef(_, _, tp1, _) :: ValDef(_, _, tp2, _) :: Nil =>
-                  TypeApply(Select(Ident(mux3Module), newTermName("None")), List(Ident(classname), tp1, tp2, tpe))
+                  TypeApply(Select(Ident(mux3Module), newTermName("None")), List(flatType(Ident(classname), tparams), tp1, tp2, tpe))
+                case ValDef(_, _, tp1, _) :: ValDef(_, _, tp2, _) :: ValDef(_, _, tp3, _) :: Nil =>
+                  TypeApply(Select(Ident(mux4Module), newTermName("None")), List(flatType(Ident(classname), tparams), tp1, tp2, tp3, tpe))
                 case _ =>
-                  unit.error(member.pos, "Only support reactive methods with up to 2 parameters.")
+                  unit.error(member.pos, "Only support reactive methods with up to 3 parameters.")
                   EmptyTree
               }
               ValDef(Modifiers(MUTABLE), muxname, tpetree, init)
@@ -100,9 +104,9 @@ class ReactressPlugin(val global: Global) extends Plugin {
 
       override def transform(tree: Tree): Tree = tree match {
         case ModuleDef(mods, name, Template(parents, self, body)) =>
-          ModuleDef(mods, name, transformTemplate(name, parents, self, body))
+          ModuleDef(mods, name, transformTemplate(name, Nil, parents, self, body))
         case ClassDef(mods, name, tparams, Template(parents, self, body)) =>
-          ClassDef(mods, name, tparams, transformTemplate(name, parents, self, body))
+          ClassDef(mods, name, tparams, transformTemplate(name, tparams, parents, self, body))
         case t =>
           super.transform(t)
       }

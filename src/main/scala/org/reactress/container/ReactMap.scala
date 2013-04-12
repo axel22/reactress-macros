@@ -10,19 +10,10 @@ import scala.reflect.ClassTag
 class ReactMap[@spec(Int, Long) K, V](
   implicit val emptyKey: ReactMap.Empty[K],
   implicit val emptyVal: ReactMap.Empty[V]
-) extends Reactive.Source[Mux2[ReactMap[K, V], K, V]] {
+) extends Reactive {
   private var keytable: Array[K] = emptyKey.newEmptyArray(ReactMap.initSize)
   private var valtable: Array[V] = emptyVal.newEmptyArray(ReactMap.initSize)
   private var sz = 0
-  private var insertsource = new Reactive.Source[Mux2[ReactMap[K, V], K, V]] {}
-  private var removesource = new Reactive.Source[Mux2[ReactMap[K, V], K, V]] {}
-  private var resizesource = new Reactive.Source[Mux1[ReactMap[K, V], Int]] {}
-
-  def inserts = insertsource
-
-  def removes = removesource
-
-  def resizes = resizesource
 
   private def lookup(k: K): V = {
     var pos = index(k)
@@ -57,12 +48,6 @@ class ReactMap[@spec(Int, Long) K, V](
     val added = curr == nil
     if (added) sz += 1
 
-    if (!silent) {
-      mux.dispatch(this, k, v)
-      insertsource.mux.dispatch(this, k, v)
-      if (added) resizesource.mux.dispatch(this, sz)
-    }
-
     previousValue
   }
 
@@ -95,10 +80,6 @@ class ReactMap[@spec(Int, Long) K, V](
       keytable(h0) = emptyKey.nil
       valtable(h1) = emptyVal.nil
       sz -= 1
-
-      mux.dispatch(this, k, emptyVal.nil)
-      removesource.mux.dispatch(this, k, previousValue)
-      resizesource.mux.dispatch(this, sz)
 
       previousValue
     }
@@ -147,24 +128,24 @@ class ReactMap[@spec(Int, Long) K, V](
     case v => Some(v)
   }
 
-  def update(key: K, value: V): Unit = insert(key, value)
+  @react def update(key: K, value: V): Unit = insert(key, value)
 
-  def put(key: K, value: V): Option[V] = insert(key, value) match {
+  @react def put(key: K, value: V): Option[V] = insert(key, value) match {
     case `emptyVal`.nil => None
     case v => Some(v)
   }
 
-  def remove(key: K): Option[V] = delete(key) match {
+  @react def remove(key: K): Option[V] = delete(key) match {
     case `emptyVal`.nil => None
     case v => Some(v)
   }
 
-  def erase(key: K): Boolean = delete(key) match {
+  @react def erase(key: K): Boolean = delete(key) match {
     case `emptyVal`.nil => false
     case v => true
   }
 
-  def clear() {
+  @react def clear() {
     var pos = 0
     val nil = emptyKey.nil
     while (pos < keytable.length) {
@@ -175,10 +156,6 @@ class ReactMap[@spec(Int, Long) K, V](
         keytable(pos) = emptyKey.nil
         valtable(pos) = emptyVal.nil
         sz -= 1
-
-        mux.dispatch(this, k, emptyVal.nil)
-        removesource.mux.dispatch(this, k, v)
-        resizesource.mux.dispatch(this, sz)
       }
 
       pos += 1

@@ -10,13 +10,12 @@ import scala.reflect.ClassTag
 class ReactTileMap[@spec(Byte, Int, Long, Double) T: ClassTag](
   size0: Int,
   default0: T
-) extends Reactive.Source[Mux3[ReactTileMap[T], Int, Int, T]] {
+) extends Reactive {
   import ReactTileMap._
 
   private var sz = nextPow2(size0)
   private var dflt = default0
   private var root: Node[T] = new Node.Leaf(dflt)
-  private var clearsource = new Reactive.Source[Mux0[ReactTileMap[T]]] {}
 
   private[reactress] def quadRoot = root
 
@@ -26,15 +25,13 @@ class ReactTileMap[@spec(Byte, Int, Long, Double) T: ClassTag](
 
   def apply(x: Int, y: Int) = root.apply(x, y, size)
 
-  def update(x: Int, y: Int, elem: T) = {
+  @react def update(x: Int, y: Int, elem: T) = {
     assert(x >= 0 && x < size && y >= 0 && y < size)
     root = root.update(x, y, size, implicitly[ClassTag[T]], default, elem)
-    mux.dispatch(this, x, y, elem)
   }
   
-  def clear() = {
+  @react def clear() = {
     root = new Node.Leaf(dflt)
-    clearsource.mux.dispatch(this)
   }
 
 }
@@ -54,7 +51,7 @@ object ReactTileMap {
 
   final def matrixSize = 4
 
-  abstract class Node[@spec(Byte, Int, Long, Double) T] {
+  trait Node[@spec(Byte, Int, Long, Double) T] {
     def apply(x: Int, y: Int, sz: Int): T
     def update(x: Int, y: Int, sz: Int, tag: ClassTag[T], d: T, elem: T): Node[T]
     def isLeaf: Boolean = false

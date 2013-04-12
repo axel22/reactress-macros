@@ -2,35 +2,42 @@ package org.reactress
 
 
 
-import Mux0.Factory._
-import Mux1.Factory._
-import Mux2.Factory._
+import language.experimental.macros
+import scala.reflect.macros.Context
 
 
 
-object ObserveTest extends Reactive {
-  
+class ObserveTest extends Reactive.Struct[ObserveTest] {
+
   @react var x = 1
 
-  observe(this.x) {
-    (ot: ObserveTest.type) => println("!")
+  map(x) {
+    println(x)
   }
 
   @react def pulse() {}
 
   pulse()
 
-  observe(this.pulse _) {
-    (ot: ObserveTest.type, u: Unit) => println("Pulsed!")
+  val pulseSignal = map(pulse _)(()) {
+    u: Unit => println("pulsed!")
   }
+
+  // observe(this.x) {
+  //   (ot: ObserveTest.type) => println("!")
+  // }
+
+  // observe(this.pulse _) {
+  //   (ot: ObserveTest.type, u: Unit) => println("Pulsed!")
+  // }
 
   pulse()
 
   @react def inc(x: Int): Int = x + 1
 
-  observe(this.inc _) {
-    (ot: ObserveTest.type, x: Int, res: Int) => println(x + " incremented: " + res)
-  }
+  // observe(this.inc _) {
+  //   (ot: ObserveTest.type, x: Int, res: Int) => println(x + " incremented: " + res)
+  // }
 
 }
 
