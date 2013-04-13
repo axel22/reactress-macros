@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
 
 
 
-class ReactTileMap[@spec(Byte, Int, Long, Double) T: ClassTag](
+class ReactTileMap[@spec(Int, Long, Double) T: ClassTag](
   size0: Int,
   default0: T
 ) extends Reactive {

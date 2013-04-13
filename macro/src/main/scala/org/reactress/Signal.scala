@@ -7,13 +7,14 @@ import scala.reflect.macros.Context
 
 
 
-abstract class Signal[@spec T](v: T, src: Reactive) extends Reactive {
-  private[reactress] val source: Reactive = src
-  private[reactress] var value = v
+abstract class Signal[@spec T](
+  @react private[reactress] var value: T,
+  private[reactress] val source: Reactive
+) extends Reactive {
 
   def apply(): T = value
 
-  private[reactress] def detach(): Unit
+  def detach(): Unit
 
   override def finalize() {
     super.finalize()
@@ -24,5 +25,5 @@ abstract class Signal[@spec T](v: T, src: Reactive) extends Reactive {
 
 
 object Signal {
-  
+
 }

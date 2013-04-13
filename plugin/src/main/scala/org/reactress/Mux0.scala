@@ -50,6 +50,11 @@ object Mux0 {
     }
   }
 
+  trait Sink[Source <: Reactive] extends Mux0[Source] {
+    def add(recv: Mux0[Source]) = ???
+    def remove(recv: Mux0[Source]) = ???
+  }
+
 }
 
 

@@ -6,6 +6,7 @@ package plugin
 import scala.tools.nsc._
 import scala.tools.nsc.plugins._
 import scala.tools.nsc.transform.Transform
+import scala.reflect.internal.Flags
 
 
 
@@ -46,18 +47,18 @@ class ReactressPlugin(val global: Global) extends Plugin {
       import Flag._
 
       def transformTemplate(classname: Name, tparams: List[TypeDef], parents: List[Tree], self: ValDef, body: List[Tree]): Template = {
+        def flatType(tree: Tree, tps: List[TypeDef]): Tree = if (tps.isEmpty) tree else AppliedTypeTree(tree, tps.map(t => flatType(Ident(t.name), t.tparams)))
         val nbody = for (member <- body) yield member match {
           case ValDef(mods, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
             val muxname = newTermName(name + "$mux")
             val mux = atPos(member.pos) {
               val tpetree = TypeTree()
-              val init = TypeApply(Select(Ident(mux0Module), newTermName("None")), List(Ident(classname)))
-              ValDef(mods.copy(annotations = Nil), muxname, tpetree, init)
+              val init = TypeApply(Select(Ident(mux0Module), newTermName("None")), List(flatType(Ident(classname), tparams)))
+              ValDef(mods.copy(annotations = Nil, flags = mods.flags & ~Flags.PARAMACCESSOR), muxname, tpetree, init)
             }
             List(member, mux)
           case DefDef(mods, name, tps, vps, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
             val muxname = newTermName(name + "$mux")
-            def flatType(tree: Tree, tps: List[TypeDef]): Tree = if (tps.isEmpty) tree else AppliedTypeTree(tree, tps.map(t => flatType(Ident(t.name), t.tparams)))
             val mux = atPos(member.pos) {
               val tpetree = TypeTree()
               val init = vps.flatten match {

@@ -8,7 +8,7 @@ import java.lang.ref.{WeakReference => WeakRef}
 
 
 
-trait Mux4[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Double) Q, @spec(Int, Long, Double) R, @spec(Boolean, Byte, Int, Long, Double) S] extends Serializable {
+trait Mux4[Source <: Reactive, @spec(Int) P, @spec(Int) Q, @spec(Int, Long, Double) R, @spec(Int, Long, Double) S] extends Serializable {
 
   def dispatch(source: Source, mp: P, mq: Q, mr: R, ms: S): Unit
 
@@ -21,7 +21,7 @@ trait Mux4[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Doub
 
 object Mux4 {
 
-  def None[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Double) Q, @spec(Int, Long, Double) R, @spec(Boolean, Byte, Int, Long, Double) S] = NoneImpl.asInstanceOf[Mux4[Source, P, Q, R, S]]
+  def None[Source <: Reactive, @spec(Int) P, @spec(Int) Q, @spec(Int, Long, Double) R, @spec(Int, Long, Double) S] = NoneImpl.asInstanceOf[Mux4[Source, P, Q, R, S]]
 
   private case object NoneImpl extends Mux4[Reactive, Any, Any, Any, Any] {
     def dispatch(source: Reactive, mp: Any, mq: Any, mr: Any, ms: Any) {}
@@ -29,7 +29,7 @@ object Mux4 {
     def remove(mux: Mux4[Reactive, Any, Any, Any, Any]) = this
   }
 
-  class Composite[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Double) Q, @spec(Int, Long, Double) R, @spec(Boolean, Byte, Int, Long, Double) S](var xs: Array[WeakRef[Mux4[Source, P, Q, R, S]]]) extends Mux4[Source, P, Q, R, S] {
+  class Composite[Source <: Reactive, @spec(Int) P, @spec(Int) Q, @spec(Int, Long, Double) R, @spec(Int, Long, Double) S](var xs: Array[WeakRef[Mux4[Source, P, Q, R, S]]]) extends Mux4[Source, P, Q, R, S] {
     def dispatch(source: Source, mp: P, mq: Q, mr: R, ms: S) {
       var i = 0
       while (i < xs.length) {
@@ -48,6 +48,11 @@ object Mux4 {
       }
       if (xs.size == 0) None else this
     }
+  }
+
+  trait Sink[Source <: Reactive, P, Q, R, S] extends Mux4[Source, P, Q, R, S] {
+    def add(recv: Mux4[Source, P, Q, R, S]) = ???
+    def remove(recv: Mux4[Source, P, Q, R, S]) = ???
   }
 
 }

@@ -2,12 +2,11 @@ package org.reactress
 
 
 
-import language.experimental.macros
-import scala.reflect.macros.Context
+import signal._
 
 
 
-class ObserveTest extends Reactive.Struct[ObserveTest] {
+class ObserveTest extends Struct[ObserveTest] {
 
   @react var x = 1
 
@@ -29,7 +28,17 @@ class ObserveTest extends Reactive.Struct[ObserveTest] {
     (x: Int, res: Int) => res
   }
 
+  val ot: ObserveTest = this
+
+  val s2 = map(ot.inc _)(0) {
+    (x: Int, res: Int) => res
+  }
+
+  val s = on(ot.inc _) {
+    (x: Int, res: Int) => println("someone called it! " + x + ", " + res)
+  }
+
+  z map { x => x + 1 }
+
 }
-
-
 

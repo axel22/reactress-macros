@@ -7,18 +7,7 @@ import scala.reflect.macros.Context
 
 
 
-package object reactress {
-
-  implicit def Util(context: Context) = new Util[context.type](context)
-
-  type spec = specialized
-
-}
-
-
 package reactress {
-
-  final class react extends scala.annotation.StaticAnnotation
 
   trait IsMux[M] {
     def none: M

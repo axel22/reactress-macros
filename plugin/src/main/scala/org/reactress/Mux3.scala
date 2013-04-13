@@ -8,7 +8,7 @@ import java.lang.ref.{WeakReference => WeakRef}
 
 
 
-trait Mux3[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Double) Q, @spec(Boolean, Byte, Int, Long, Double) R] extends Serializable {
+trait Mux3[Source <: Reactive, @spec(Int, Double) P, @spec(Int, Double) Q, @spec(Boolean, Int, Long, Double) R] extends Serializable {
 
   def dispatch(source: Source, mp: P, mq: Q, mr: R): Unit
 
@@ -21,7 +21,7 @@ trait Mux3[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Doub
 
 object Mux3 {
 
-  def None[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Double) Q, @spec(Boolean, Byte, Int, Long, Double) R] = NoneImpl.asInstanceOf[Mux3[Source, P, Q, R]]
+  def None[Source <: Reactive, @spec(Int, Double) P, @spec(Int, Double) Q, @spec(Boolean, Int, Long, Double) R] = NoneImpl.asInstanceOf[Mux3[Source, P, Q, R]]
 
   private case object NoneImpl extends Mux3[Reactive, Any, Any, Any] {
     def dispatch(source: Reactive, mp: Any, mq: Any, mr: Any) {}
@@ -29,7 +29,7 @@ object Mux3 {
     def remove(mux: Mux3[Reactive, Any, Any, Any]) = this
   }
 
-  class Composite[Source <: Reactive, @spec(Int, Long, Double) P, @spec(Int, Long, Double) Q, @spec(Boolean, Byte, Int, Long, Double) R](var ms: Array[WeakRef[Mux3[Source, P, Q, R]]]) extends Mux3[Source, P, Q, R] {
+  class Composite[Source <: Reactive, @spec(Int, Double) P, @spec(Int, Double) Q, @spec(Boolean, Int, Long, Double) R](var ms: Array[WeakRef[Mux3[Source, P, Q, R]]]) extends Mux3[Source, P, Q, R] {
     def dispatch(source: Source, mp: P, mq: Q, mr: R) {
       var i = 0
       while (i < ms.length) {
@@ -48,6 +48,11 @@ object Mux3 {
       }
       if (ms.size == 0) None else this
     }
+  }
+
+  trait Sink[Source <: Reactive, P, Q, R] extends Mux3[Source, P, Q, R] {
+    def add(recv: Mux3[Source, P, Q, R]) = ???
+    def remove(recv: Mux3[Source, P, Q, R]) = ???
   }
 
 }
