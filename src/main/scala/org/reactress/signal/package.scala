@@ -20,6 +20,7 @@ package object signal {
   implicit class SignalOps[T](val signal: Signal[T]) extends AnyVal {
     def map[S](f: T => S): Signal[S] = macro mapSignal[T, S]
     def foreach[U](f: T => U): Signal[Unit] = macro foreachSignal[T, U]
+    def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = null
   }
 
   def mapSignal[T: c.WeakTypeTag, S: c.WeakTypeTag](c: Context)(f: c.Expr[T => S]): c.Expr[Signal[S]] = {
