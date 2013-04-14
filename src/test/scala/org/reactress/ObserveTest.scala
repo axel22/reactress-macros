@@ -38,7 +38,7 @@ class ObserveTest extends Struct[ObserveTest] {
     (x: Int, res: Int) => println("someone called it! " + x + ", " + res)
   }
 
-  z map { x => x + 1 }
+  val z2 = z map { x => x - 1 }
 
 }
 

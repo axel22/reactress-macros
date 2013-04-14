@@ -9,6 +9,14 @@ import scala.reflect.macros.Context
 
 package object signal {
 
+  /* signal constructors */
+
+  def constant[T](v: T): Signal[T] = new Signal[T](v, Reactive.None) {
+    def detach() {}
+  }
+
+  /* operations on signals */
+
   implicit class SignalOps[T](val signal: Signal[T]) extends AnyVal {
     def map[S](f: T => S): Signal[S] = macro mapSignal[T, S]
     def foreach[U](f: T => U): Signal[Unit] = macro foreachSignal[T, U]
