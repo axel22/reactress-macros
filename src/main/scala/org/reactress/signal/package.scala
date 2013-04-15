@@ -19,8 +19,8 @@ package object signal {
 
   implicit class SignalOps[T](val signal: Signal[T]) extends AnyVal {
     def map[S](f: T => S): Signal[S] = macro mapSignal[T, S]
-    def foreach[U](f: T => U): Signal[Unit] = macro foreachSignal[T, U]
-    def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = null
+    def on[U](f: T => U): Signal[Unit] = macro onSignal[T, U]
+    def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = macro foldSignal[T, U]
   }
 
   def mapSignal[T: c.WeakTypeTag, S: c.WeakTypeTag](c: Context)(f: c.Expr[T => S]): c.Expr[Signal[S]] = {
@@ -37,7 +37,7 @@ package object signal {
     Struct.mapField[Signal[T], T, S](c)(field)(body)
   }
 
-  def foreachSignal[T: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(f: c.Expr[T => U]): c.Expr[Signal[Unit]] = {
+  def onSignal[T: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(f: c.Expr[T => U]): c.Expr[Signal[Unit]] = {
     import c.universe._
 
     val Apply(TypeApply(Select(Apply(_, List(signal)), _), _), _) = c.macroApplication

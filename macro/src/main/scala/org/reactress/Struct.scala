@@ -23,12 +23,32 @@ trait Struct[Source <: Reactive] extends Reactive {
   def on[P, Q, U](method: P => Q)(body: (P, Q) => U): Signal[Unit] = macro Struct.onMethod1[Source, P, Q, U]
   def on[P, Q, R, U](method: (P, Q) => R)(body: (P, Q, R) => U): Signal[Unit] = macro Struct.onMethod2[Source, P, Q, R, U]
   def on[P, Q, R, S, U](method: (P, Q, R) => S)(body: (P, Q, R, S) => U): Signal[Unit] = macro Struct.onMethod3[Source, P, Q, R, S, U]
+  def foldPast[T, U](field: T)(init: U)(op: (U, T) => U): Signal[U] = macro Struct.foldField[Source, T, U]
 }
 
 
 object Struct {
 
   implicit def c2utils(c: Context) = new Util[c.type](c)
+
+  def foldField[Source <: Reactive: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(field: c.Expr[T])(init: c.Expr[U])(op: c.Expr[(U, T) => U]): c.Expr[Signal[U]] = {
+    import c.universe._
+
+    val v = createSignal[Source, U](c)(field.tree) { (ownerExpr, detachBody) =>
+      reify {
+        new Signal[U](init.splice, ownerExpr.splice) with Mux0.Sink[Source] {
+          def dispatch(source: Source) {
+            value = op.splice(value, field.splice)
+          }
+          def detach() {
+            detachBody.splice(this)
+          }
+        }
+      }
+    }
+
+    v
+  }
 
   def onMethod3[Source <: Reactive: c.WeakTypeTag, P: c.WeakTypeTag, Q: c.WeakTypeTag, R: c.WeakTypeTag, S: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(method: c.Expr[(P, Q, R) => S])(body: c.Expr[(P, Q, R, S) => U]): c.Expr[Signal[Unit]] = {
     import c.universe._
