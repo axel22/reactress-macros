@@ -20,7 +20,18 @@ package object signal {
   implicit class SignalOps[T](val signal: Signal[T]) extends AnyVal {
     def map[S](f: T => S): Signal[S] = macro mapSignal[T, S]
     def on[U](f: T => U): Signal[Unit] = macro onSignal[T, U]
-    def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = macro foldSignal[T, U]
+    def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = macro foldPastSignal[T, S]
+  }
+
+  def foldPastSignal[T: c.WeakTypeTag, S: c.WeakTypeTag](c: Context)(z: c.Expr[S])(op: c.Expr[(S, T) => S]): c.Expr[Signal[S]] = {
+    import c.universe._
+
+    val Apply(TypeApply(Select(Apply(_, List(signal)), _), _), _) = c.macroApplication
+    val field = reify {
+      (c.Expr[Signal[T]](signal)).splice.value
+    }
+
+    Struct.foldField[Signal[T], T, S](c)(field)(z)(op)
   }
 
   def mapSignal[T: c.WeakTypeTag, S: c.WeakTypeTag](c: Context)(f: c.Expr[T => S]): c.Expr[Signal[S]] = {
