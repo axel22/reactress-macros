@@ -25,28 +25,32 @@ object Mux1 {
 
   private case object NoneImpl extends Mux1[Reactive, Any] {
     def dispatch(source: Reactive, msg: Any) {}
-    def add(mux: Mux1[Reactive, Any]) = new Composite(Array(new WeakRef(mux)))
+    def add(mux: Mux1[Reactive, Any]) = new Composite().add(this)
     def remove(mux: Mux1[Reactive, Any]) = this
   }
 
-  class Composite[Source <: Reactive, @spec(Boolean, Char, Int, Long, Double) T](var ms: Array[WeakRef[Mux1[Source, T]]]) extends Mux1[Source, T] {
+  class Composite[Source <: Reactive, @spec(Boolean, Char, Int, Long, Double) T]
+  extends MuxHashTable[Mux1[Source, T]] with Mux1[Source, T] {
     def dispatch(source: Source, msg: T) {
       var i = 0
-      while (i < ms.length) {
-        val ref = ms(i).get
-        if (ref ne null) ref.dispatch(source, msg)
+      while (i < table.length) {
+        val weakref = table(i)
+        if (weakref ne null) {
+          val ref = weakref.get
+          if (ref ne null) ref.dispatch(source, msg)
+        }
         i += 1
       }
     }
+
     def add(recv: Mux1[Source, T]) = {
-      ms = ms :+ new WeakRef(recv)
+      addEntry(recv)
       this
     }
+
     def remove(recv: Mux1[Source, T]) = {
-      ms = ms filter {
-        x => x.get != null && x.get != recv
-      }
-      if (ms.size == 0) None else this
+      removeEntry(recv)
+      if (size > 0) this else None
     }
   }
 
