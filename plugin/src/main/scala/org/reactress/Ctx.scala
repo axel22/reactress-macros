@@ -2,12 +2,13 @@ package org.reactress
 
 
 
+import scala.collection._
 
 
 
 abstract class Ctx {
 
-  def defer(priority: Int, d: Deferrable): Unit
+  def defer(d: Deferrable): Unit
 
   def flush(): Unit
 
@@ -25,9 +26,13 @@ object Ctx {
   }
 
   final class Default extends Ctx {
-    def defer(priority: Int, d: Deferrable) = ???
+    private val queue = mutable.PriorityQueue[Deferrable]()
+    def defer(d: Deferrable) = queue += d
     def flush {
-      
+      while (queue.nonEmpty) {
+        val d = queue.dequeue()
+        d.execute(this)
+      }
     }
   }
 

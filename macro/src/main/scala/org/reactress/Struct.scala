@@ -36,7 +36,9 @@ object Struct {
 
     val v = createSignal[Source, U](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M0[Source, U](init.splice, ownerExpr.splice) {
+        new Signal.M0[Source, U](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
             value = op.splice(value, field.splice)
           }
@@ -55,7 +57,9 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M4[Source, Unit, P, Q, R, S]((), ownerExpr.splice) {
+        new Signal.M4[Source, Unit, P, Q, R, S](()) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
             body.splice(mp, mq, mr, ms)
           }
@@ -74,7 +78,9 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M3[Source, Unit, P, Q, R]((), ownerExpr.splice) {
+        new Signal.M3[Source, Unit, P, Q, R](()) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
             body.splice(mp, mq, mr)
           }
@@ -93,7 +99,9 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M2[Source, Unit, P, Q]((), ownerExpr.splice) {
+        new Signal.M2[Source, Unit, P, Q](()) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
             body.splice(mp, mq)
           }
@@ -112,7 +120,9 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M1[Source, Unit, T]((), ownerExpr.splice) {
+        new Signal.M1[Source, Unit, T](()) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mt: T) {
             body.splice(mt)
           }
@@ -131,7 +141,9 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M0[Source, Unit]((), ownerExpr.splice) {
+        new Signal.M0[Source, Unit](()) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
             body.splice
           }
@@ -150,7 +162,9 @@ object Struct {
 
     val v = createSignal[Source, (P, Q)](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M2[Source, (P, Q), P, Q](init.splice, ownerExpr.splice) {
+        new Signal.M2[Source, (P, Q), P, Q](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
             value = (mp, mq)
           }
@@ -169,7 +183,9 @@ object Struct {
 
     val v = createSignal[Source, (P, Q, R)](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M3[Source, (P, Q, R), P, Q, R](init.splice, ownerExpr.splice) {
+        new Signal.M3[Source, (P, Q, R), P, Q, R](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
             value = (mp, mq, mr)
           }
@@ -188,7 +204,9 @@ object Struct {
 
     val v = createSignal[Source, (P, Q, R, S)](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M4[Source, (P, Q, R, S), P, Q, R, S](init.splice, ownerExpr.splice) {
+        new Signal.M4[Source, (P, Q, R, S), P, Q, R, S](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
             value = (mp, mq, mr, ms)
           }
@@ -207,7 +225,9 @@ object Struct {
 
     val v = createSignal[Source, T](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M1[Source, T, T](init.splice, ownerExpr.splice) {
+        new Signal.M1[Source, T, T](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, v: T) {
             if (body.splice(v)) value = v
           }
@@ -226,7 +246,9 @@ object Struct {
 
     val v = createSignal[Source, T](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M0[Source, T](init.splice, ownerExpr.splice) {
+        new Signal.M0[Source, T](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
             if (body.splice) value = field.splice
           }
@@ -245,7 +267,9 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M1[Source, U, T](init.splice, ownerExpr.splice) {
+        new Signal.M1[Source, U, T](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mt: T) {
             value = body.splice(mt)
           }
@@ -264,7 +288,9 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M2[Source, U, P, Q](init.splice, ownerExpr.splice) {
+        new Signal.M2[Source, U, P, Q](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
             value = body.splice(mp, mq)
           }
@@ -283,7 +309,9 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M3[Source, U, P, Q, R](init.splice, ownerExpr.splice) {
+        new Signal.M3[Source, U, P, Q, R](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
             value = body.splice(mp, mq, mr)
           }
@@ -302,7 +330,9 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M4[Source, U, P, Q, R, S](init.splice, ownerExpr.splice) {
+        new Signal.M4[Source, U, P, Q, R, S](init.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
             value = body.splice(mp, mq, mr, ms)
           }
@@ -321,7 +351,9 @@ object Struct {
 
     val v = createSignal[Source, U](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal.M0[Source, U](body.splice, ownerExpr.splice) {
+        new Signal.M0[Source, U](body.splice) {
+          val source = ownerExpr.splice
+          override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
             value = body.splice
           }
@@ -335,7 +367,7 @@ object Struct {
     v
   }
 
-  def createSignal[Source <: Reactive: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(member: c.Tree)(inst: (c.Expr[Source], c.Expr[Signal[U] => Unit]) => c.Expr[Signal[U]]): c.Expr[Signal[U]] = {
+  def getOwner(c: Context)(member: c.Tree): (c.Tree, c.TermName) = {
     import c.universe._
 
     val qn = member match {
@@ -350,14 +382,22 @@ object Struct {
           case NoSymbol =>
             println(q.symbol.typeSignature.members)
             c.error(c.enclosingPosition, "Can only map reactive members.")
-            return reify { null }
+            (EmptyTree, null)
           case m =>
             (q, muxname)
         }
       case _ =>
         c.error(c.enclosingPosition, "Must use `object.field` or `object.method _` to refer to a reactive field.")
-        return reify { null }
+        (EmptyTree, null)
     }
+
+    (owner, muxname)
+  }
+
+  def createSignal[Source <: Reactive: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(member: c.Tree)(inst: (c.Expr[Source], c.Expr[Signal[U] => Unit]) => c.Expr[Signal[U]]): c.Expr[Signal[U]] = {
+    import c.universe._
+
+    val (owner, muxname) = getOwner(c)(member)
     val selectmux = c.Expr[Mux0[Source]](Select(owner, muxname))
     val ownerExpr = c.Expr[Source](owner)
     val removeName = newTermName("remove")

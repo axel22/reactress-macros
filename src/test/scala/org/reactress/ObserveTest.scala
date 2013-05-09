@@ -40,5 +40,9 @@ class ObserveTest extends Struct[ObserveTest] {
 
   val z2 = z map { x => x - 1 }
 
+  val zipped = zip(z, z2) { (a, b) =>
+    a - b
+  }
+
 }
 
