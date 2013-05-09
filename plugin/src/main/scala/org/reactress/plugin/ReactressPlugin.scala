@@ -172,7 +172,6 @@ class ReactressPlugin(val global: Global) extends Plugin {
               )
               val nsetter = DefDef(mods, name, tps, vps :+ List(implicitCtx), tpt, nrhs)
               nsetter.symbol = member.symbol
-              println(nsetter)
 
               val nmember = localTyper.typed {
                 atPos(field.pos) {
