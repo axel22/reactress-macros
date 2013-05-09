@@ -31,6 +31,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
   val mux2Module = mux2Class.companionSymbol
   val mux3Module = mux3Class.companionSymbol
   val mux4Module = mux4Class.companionSymbol
+  val ctxClass = definitions.getClass(newTermName(classOf[Ctx].getName))
   val observeName = newTermName("observe")
 
   private object AddMuxComponent extends PluginComponent with Transform {
@@ -88,13 +89,16 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val nrhs = Block(
                 List(
                   ValDef(Modifiers(), appresname, TypeTree(), application),
-                  Apply(Select(Select(This(classname.toString), muxname), newTermName("dispatch")), This(classname.toString) :: vps.flatten.map(v => Ident(v.name)) ::: List(Ident(appresname)))
+                  Apply(Select(Select(This(classname.toString), muxname), newTermName("dispatch")), Ident(newTermName("ctx")) :: This(classname.toString) :: vps.flatten.map(v => Ident(v.name)) ::: List(Ident(appresname)))
                 ),
                 Ident(appresname)
               )
-              DefDef(mods.copy(annotations = Nil), wrappername, tps, vps, tpe, nrhs)
+              val implicitCtx = ValDef(Modifiers(Flags.IMPLICIT), newTermName("ctx"), TypeTree(ctxClass.tpe), EmptyTree)
+              DefDef(mods.copy(annotations = Nil), wrappername, tps, vps :+ List(implicitCtx), tpe, nrhs)
             }
-            List(member, mux, wrapper)
+
+            val nmember = DefDef(mods, name, tps, vps, tpe, rhs)
+            List(nmember, mux, wrapper)
           case _ =>
             List(member)
         }
@@ -149,16 +153,19 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val muxname = newTermName(getter.name + "$mux")
 
               // find getter and instrument its body
+              val ctxname = newTermName("ctx")
+              val ctxsym = member.symbol.newValueParameter(ctxname, NoPosition, Flags.IMPLICIT).setInfo(ctxClass.tpe)
+              val implicitCtx = ValDef(ctxsym)
               val nrhs = Block(
                 List(
-                  Apply(
-                    Select(Select(This(clazz), muxname), newTermName("dispatch")),
-                    List(This(clazz))
-                  )
+                  rhs
                 ),
-                rhs
+                Apply(
+                  Select(Select(This(clazz), muxname), newTermName("dispatch")),
+                  List(Ident(ctxname), This(clazz)) // TODO
+                )
               )
-              val nsetter = DefDef(mods, name, tps, vps, tpt, nrhs)
+              val nsetter = DefDef(mods, name, tps, vps :+ List(implicitCtx), tpt, nrhs)
               nsetter.symbol = member.symbol
 
               val nmember = localTyper.typed {

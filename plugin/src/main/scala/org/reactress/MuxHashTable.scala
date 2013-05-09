@@ -6,7 +6,7 @@ import java.lang.ref.{WeakReference => WeakRef}
 
 
 
-abstract class MuxHashTable[M <: AnyRef] {
+trait MuxHashTable[M <: AnyRef] {
   var table = new Array[WeakRef[M]](2)
   var size = 0
   var threshold = 2

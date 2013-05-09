@@ -36,8 +36,8 @@ object Struct {
 
     val v = createSignal[Source, U](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[U](init.splice, ownerExpr.splice) with Mux0.Sink[Source] {
-          def dispatch(source: Source) {
+        new Signal.M0[Source, U](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source) {
             value = op.splice(value, field.splice)
           }
           def detach() {
@@ -55,8 +55,8 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[Unit]((), ownerExpr.splice) with Mux4.Sink[Source, P, Q, R, S] {
-          def dispatch(source: Source, mp: P, mq: Q, mr: R, ms: S) {
+        new Signal.M4[Source, Unit, P, Q, R, S]((), ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
             body.splice(mp, mq, mr, ms)
           }
           def detach() {
@@ -74,8 +74,8 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[Unit]((), ownerExpr.splice) with Mux3.Sink[Source, P, Q, R] {
-          def dispatch(source: Source, mp: P, mq: Q, mr: R) {
+        new Signal.M3[Source, Unit, P, Q, R]((), ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
             body.splice(mp, mq, mr)
           }
           def detach() {
@@ -93,8 +93,8 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[Unit]((), ownerExpr.splice) with Mux2.Sink[Source, P, Q] {
-          def dispatch(source: Source, mp: P, mq: Q) {
+        new Signal.M2[Source, Unit, P, Q]((), ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
             body.splice(mp, mq)
           }
           def detach() {
@@ -112,8 +112,8 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[Unit]((), ownerExpr.splice) with Mux1.Sink[Source, T] {
-          def dispatch(source: Source, mt: T) {
+        new Signal.M1[Source, Unit, T]((), ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mt: T) {
             body.splice(mt)
           }
           def detach() {
@@ -131,8 +131,8 @@ object Struct {
 
     val v = createSignal[Source, Unit](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[Unit]((), ownerExpr.splice) with Mux0.Sink[Source] {
-          def dispatch(source: Source) {
+        new Signal.M0[Source, Unit]((), ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source) {
             body.splice
           }
           def detach() {
@@ -150,8 +150,8 @@ object Struct {
 
     val v = createSignal[Source, (P, Q)](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[(P, Q)](init.splice, ownerExpr.splice) with Mux2.Sink[Source, P, Q] {
-          def dispatch(source: Source, mp: P, mq: Q) {
+        new Signal.M2[Source, (P, Q), P, Q](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
             value = (mp, mq)
           }
           def detach() {
@@ -169,8 +169,8 @@ object Struct {
 
     val v = createSignal[Source, (P, Q, R)](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[(P, Q, R)](init.splice, ownerExpr.splice) with Mux3.Sink[Source, P, Q, R] {
-          def dispatch(source: Source, mp: P, mq: Q, mr: R) {
+        new Signal.M3[Source, (P, Q, R), P, Q, R](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
             value = (mp, mq, mr)
           }
           def detach() {
@@ -188,8 +188,8 @@ object Struct {
 
     val v = createSignal[Source, (P, Q, R, S)](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[(P, Q, R, S)](init.splice, ownerExpr.splice) with Mux4.Sink[Source, P, Q, R, S] {
-          def dispatch(source: Source, mp: P, mq: Q, mr: R, ms: S) {
+        new Signal.M4[Source, (P, Q, R, S), P, Q, R, S](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
             value = (mp, mq, mr, ms)
           }
           def detach() {
@@ -207,8 +207,8 @@ object Struct {
 
     val v = createSignal[Source, T](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[T](init.splice, ownerExpr.splice) with Mux1.Sink[Source, T] {
-          def dispatch(source: Source, v: T) {
+        new Signal.M1[Source, T, T](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, v: T) {
             if (body.splice(v)) value = v
           }
           def detach() {
@@ -226,8 +226,8 @@ object Struct {
 
     val v = createSignal[Source, T](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[T](init.splice, ownerExpr.splice) with Mux0.Sink[Source] {
-          def dispatch(source: Source) {
+        new Signal.M0[Source, T](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source) {
             if (body.splice) value = field.splice
           }
           def detach() {
@@ -245,8 +245,8 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[U](init.splice, ownerExpr.splice) with Mux1.Sink[Source, T] {
-          def dispatch(source: Source, mt: T) {
+        new Signal.M1[Source, U, T](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mt: T) {
             value = body.splice(mt)
           }
           def detach() {
@@ -264,8 +264,8 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[U](init.splice, ownerExpr.splice) with Mux2.Sink[Source, P, Q] {
-          def dispatch(source: Source, mp: P, mq: Q) {
+        new Signal.M2[Source, U, P, Q](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
             value = body.splice(mp, mq)
           }
           def detach() {
@@ -283,8 +283,8 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[U](init.splice, ownerExpr.splice) with Mux3.Sink[Source, P, Q, R] {
-          def dispatch(source: Source, mp: P, mq: Q, mr: R) {
+        new Signal.M3[Source, U, P, Q, R](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
             value = body.splice(mp, mq, mr)
           }
           def detach() {
@@ -302,8 +302,8 @@ object Struct {
 
     val v = createSignal[Source, U](c)(method.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[U](init.splice, ownerExpr.splice) with Mux4.Sink[Source, P, Q, R, S] {
-          def dispatch(source: Source, mp: P, mq: Q, mr: R, ms: S) {
+        new Signal.M4[Source, U, P, Q, R, S](init.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
             value = body.splice(mp, mq, mr, ms)
           }
           def detach() {
@@ -321,8 +321,8 @@ object Struct {
 
     val v = createSignal[Source, U](c)(field.tree) { (ownerExpr, detachBody) =>
       reify {
-        new Signal[U](body.splice, ownerExpr.splice) with Mux0.Sink[Source] {
-          def dispatch(source: Source) {
+        new Signal.M0[Source, U](body.splice, ownerExpr.splice) {
+          def dispatch(ctx: Ctx, source: Source) {
             value = body.splice
           }
           def detach() {
