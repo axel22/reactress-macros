@@ -26,7 +26,9 @@ object Ctx {
 
   final class Default extends Ctx {
     def defer(priority: Int, d: Deferrable) = ???
-    def flush = ???
+    def flush {
+      
+    }
   }
 
 }

@@ -89,7 +89,8 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val nrhs = Block(
                 List(
                   ValDef(Modifiers(), appresname, TypeTree(), application),
-                  Apply(Select(Select(This(classname.toString), muxname), newTermName("dispatch")), Ident(newTermName("ctx")) :: This(classname.toString) :: vps.flatten.map(v => Ident(v.name)) ::: List(Ident(appresname)))
+                  Apply(Select(Select(This(classname.toString), muxname), newTermName("dispatch")), Ident(newTermName("ctx")) :: This(classname.toString) :: vps.flatten.map(v => Ident(v.name)) ::: List(Ident(appresname))),
+                  Apply(Select(Ident(newTermName("ctx")), newTermName("flush")), Nil)
                 ),
                 Ident(appresname)
               )
@@ -162,7 +163,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
                 ),
                 Apply(
                   Select(Select(This(clazz), muxname), newTermName("dispatch")),
-                  List(Ident(ctxname), This(clazz)) // TODO
+                  List(Ident(ctxname), This(clazz))
                 )
               )
               val nsetter = DefDef(mods, name, tps, vps :+ List(implicitCtx), tpt, nrhs)
