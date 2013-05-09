@@ -159,15 +159,20 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val implicitCtx = ValDef(ctxsym)
               val nrhs = Block(
                 List(
-                  rhs
+                  rhs,
+                  Apply(
+                    Select(Select(This(clazz), muxname), newTermName("dispatch")),
+                    List(Ident(ctxname), This(clazz))
+                  )
                 ),
                 Apply(
-                  Select(Select(This(clazz), muxname), newTermName("dispatch")),
-                  List(Ident(ctxname), This(clazz))
+                  Select(This(clazz), newTermName("flush")),
+                  List(Ident(ctxname))
                 )
               )
               val nsetter = DefDef(mods, name, tps, vps :+ List(implicitCtx), tpt, nrhs)
               nsetter.symbol = member.symbol
+              println(nsetter)
 
               val nmember = localTyper.typed {
                 atPos(field.pos) {

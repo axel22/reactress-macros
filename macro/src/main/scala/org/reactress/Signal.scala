@@ -16,6 +16,8 @@ abstract class Signal[@spec(Boolean, Char, Int, Long, Double) T](
 
   def detach(): Unit
 
+  final override def flush(ctx: Ctx) {}
+
   override def finalize() {
     super.finalize()
     detach()
