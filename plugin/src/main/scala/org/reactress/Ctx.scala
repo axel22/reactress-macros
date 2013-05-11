@@ -21,7 +21,7 @@ object Ctx {
     override def initialValue = new Default
   }
 
-  implicit def current: Ctx = Thread.currentThread match {
+  implicit def current(): Ctx = Thread.currentThread match {
     case _ => local.get
   }
 

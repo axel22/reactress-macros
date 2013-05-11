@@ -40,7 +40,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
-            value = op.splice(value, field.splice)
+            set(op.splice(value, field.splice), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -166,7 +166,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
-            value = (mp, mq)
+            set((mp, mq), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -187,7 +187,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
-            value = (mp, mq, mr)
+            set((mp, mq, mr), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -208,7 +208,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
-            value = (mp, mq, mr, ms)
+            set((mp, mq, mr, ms), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -229,7 +229,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, v: T) {
-            if (body.splice(v)) value = v
+            if (body.splice(v)) set(v, ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -250,7 +250,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
-            if (body.splice) value = field.splice
+            if (body.splice) set(field.splice, ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -271,7 +271,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mt: T) {
-            value = body.splice(mt)
+            set(body.splice(mt), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -292,7 +292,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q) {
-            value = body.splice(mp, mq)
+            set(body.splice(mp, mq), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -313,7 +313,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R) {
-            value = body.splice(mp, mq, mr)
+            set(body.splice(mp, mq, mr), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -334,7 +334,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R, ms: S) {
-            value = body.splice(mp, mq, mr, ms)
+            set(body.splice(mp, mq, mr, ms), ctx)
           }
           def detach() {
             detachBody.splice(this)
@@ -355,7 +355,7 @@ object Struct {
           val source = ownerExpr.splice
           override val priority = source.priority + 1
           def dispatch(ctx: Ctx, source: Source) {
-            value = body.splice
+            set(body.splice, ctx)
           }
           def detach() {
             detachBody.splice(this)

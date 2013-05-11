@@ -11,7 +11,8 @@ package object signal {
 
   /* signal constructors */
 
-  def constant[T](v: T): Signal[T] = new Signal[T](v) {
+  def constant[@specialized T](v: T): Signal[T] = new Signal[T] {
+    @react(source[Signal[T]]) var value = v
     override def priority = 0
     def detach() {}
   }
@@ -37,6 +38,7 @@ package object signal {
       val s = new Signal.M0[Signal[Any], W](f.splice(psrc.value, qsrc.value)) with Deferrable {
         val psource = psrc
         val qsource = qsrc
+        var deferred = false
         override val priority = {
           val pp = psource.priority
           val qp = qsource.priority
@@ -45,18 +47,22 @@ package object signal {
         def asP = this.asInstanceOf[Mux0[Signal[P]]]
         def asQ = this.asInstanceOf[Mux0[Signal[Q]]]
         def dispatch(ctx: Ctx, source: Signal[Any]) {
-          ctx.defer(this)
+          if (!deferred) {
+            deferred = true
+            ctx.defer(this)
+          }
         }
         def execute(ctx: Ctx) {
+          deferred = false
           value = f.splice(psource.value, qsource.value)
         }
         def detach() {
-          psource.value$mux.remove(asP)
-          qsource.value$mux.remove(asQ)
+          psource.value$mux = psource.value$mux.remove(asP)
+          qsource.value$mux = qsource.value$mux.remove(asQ)
         }
       }
-      psrc.value$mux.add(s.asP)
-      qsrc.value$mux.add(s.asQ)
+      psrc.value$mux = psrc.value$mux.add(s.asP)
+      qsrc.value$mux = qsrc.value$mux.add(s.asQ)
       s
     }
 

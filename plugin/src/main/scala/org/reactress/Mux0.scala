@@ -10,6 +10,12 @@ import scala.collection.mutable.FlatHashTable
 
 trait Mux0[Source <: Reactive] extends Serializable {
 
+  def dispatchOnDefault(source: Source) = {
+    val ctx = Ctx.current()
+    dispatch(ctx, source)
+    ctx.flush()
+  }
+
   def dispatch(ctx: Ctx, source: Source): Unit
 
   def add(recv: Mux0[Source]): Mux0[Source]
@@ -24,12 +30,13 @@ object Mux0 {
   def None[Source <: Reactive]: Mux0[Source] = NoneImpl.asInstanceOf[Mux0[Source]]
 
   private case object NoneImpl extends Mux0[Reactive] {
+    override def dispatchOnDefault(source: Reactive) {}
     def dispatch(ctx: Ctx, source: Reactive) {}
-    def add(mux: Mux0[Reactive]) = new Composite().add(this)
+    def add(mux: Mux0[Reactive]) = new Composite().add(mux)
     def remove(mux: Mux0[Reactive]) = this
   }
 
-  case class Composite[Source <: Reactive]()
+  class Composite[Source <: Reactive]()
   extends Mux0[Source] with MuxHashTable[Mux0[Source]] {
     def dispatch(ctx: Ctx, source: Source) {
       var i = 0

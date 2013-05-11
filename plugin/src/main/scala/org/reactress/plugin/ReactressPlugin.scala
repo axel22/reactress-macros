@@ -32,6 +32,7 @@ class ReactressPlugin(val global: Global) extends Plugin {
   val mux3Module = mux3Class.companionSymbol
   val mux4Module = mux4Class.companionSymbol
   val ctxClass = definitions.getClass(newTermName(classOf[Ctx].getName))
+  val ctxModule = ctxClass.companionSymbol
   val observeName = newTermName("observe")
 
   private object AddMuxComponent extends PluginComponent with Transform {
@@ -49,12 +50,20 @@ class ReactressPlugin(val global: Global) extends Plugin {
 
       def transformTemplate(classname: Name, tparams: List[TypeDef], parents: List[Tree], self: ValDef, body: List[Tree]): Template = {
         def flatType(tree: Tree, tps: List[TypeDef]): Tree = if (tps.isEmpty) tree else AppliedTypeTree(tree, tps.map(t => flatType(Ident(t.name), t.tparams)))
+        def muxSourceType(mods: Modifiers): Tree = {
+          mods.annotations collect {
+            case Apply(Select(New(Ident(nm)), _), List(TypeApply(_, List(tp)))) if nm == reactAnnotSimpleName => tp
+          } match {
+            case tp :: _ => tp
+            case Nil => flatType(Ident(classname), tparams)
+          }
+        }
         val nbody = for (member <- body) yield member match {
           case ValDef(mods, name, tpe, rhs) if mods.hasAnnotationNamed(reactAnnotSimpleName) =>
             val muxname = newTermName(name + "$mux")
             val mux = atPos(member.pos) {
               val tpetree = TypeTree()
-              val init = TypeApply(Select(Ident(mux0Module), newTermName("None")), List(flatType(Ident(classname), tparams)))
+              val init = TypeApply(Select(Ident(mux0Module), newTermName("None")), List(muxSourceType(mods)))
               ValDef(mods.copy(annotations = Nil, flags = mods.flags & ~Flags.PARAMACCESSOR), muxname, tpetree, init)
             }
             List(member, mux)
@@ -64,13 +73,13 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val tpetree = TypeTree()
               val init = vps.flatten match {
                 case Nil =>
-                  TypeApply(Select(Ident(mux1Module), newTermName("None")), List(flatType(Ident(classname), tparams), tpe))
+                  TypeApply(Select(Ident(mux1Module), newTermName("None")), List(muxSourceType(mods), tpe))
                 case ValDef(_, _, tp1, _) :: Nil =>
-                  TypeApply(Select(Ident(mux2Module), newTermName("None")), List(flatType(Ident(classname), tparams), tp1, tpe))
+                  TypeApply(Select(Ident(mux2Module), newTermName("None")), List(muxSourceType(mods), tp1, tpe))
                 case ValDef(_, _, tp1, _) :: ValDef(_, _, tp2, _) :: Nil =>
-                  TypeApply(Select(Ident(mux3Module), newTermName("None")), List(flatType(Ident(classname), tparams), tp1, tp2, tpe))
+                  TypeApply(Select(Ident(mux3Module), newTermName("None")), List(muxSourceType(mods), tp1, tp2, tpe))
                 case ValDef(_, _, tp1, _) :: ValDef(_, _, tp2, _) :: ValDef(_, _, tp3, _) :: Nil =>
-                  TypeApply(Select(Ident(mux4Module), newTermName("None")), List(flatType(Ident(classname), tparams), tp1, tp2, tp3, tpe))
+                  TypeApply(Select(Ident(mux4Module), newTermName("None")), List(muxSourceType(mods), tp1, tp2, tp3, tpe))
                 case _ =>
                   unit.error(member.pos, "Only support reactive methods with up to 3 parameters.")
                   EmptyTree
@@ -89,13 +98,13 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val nrhs = Block(
                 List(
                   ValDef(Modifiers(), appresname, TypeTree(), application),
-                  Apply(Select(Select(This(classname.toString), muxname), newTermName("dispatch")), Ident(newTermName("ctx")) :: This(classname.toString) :: vps.flatten.map(v => Ident(v.name)) ::: List(Ident(appresname))),
-                  Apply(Select(Ident(newTermName("ctx")), newTermName("flush")), Nil)
+                  Apply(
+                    Select(Select(This(classname.toString), muxname), newTermName("dispatchOnDefault")), This(classname.toString) :: vps.flatten.map(v => Ident(v.name)) ::: List(Ident(appresname))
+                  )
                 ),
                 Ident(appresname)
               )
-              val implicitCtx = ValDef(Modifiers(Flags.IMPLICIT), newTermName("ctx"), TypeTree(ctxClass.tpe), EmptyTree)
-              DefDef(mods.copy(annotations = Nil), wrappername, tps, vps :+ List(implicitCtx), tpe, nrhs)
+              DefDef(mods.copy(annotations = Nil), wrappername, tps, vps, tpe, nrhs)
             }
 
             val nmember = DefDef(mods, name, tps, vps, tpe, rhs)
@@ -142,6 +151,11 @@ class ReactressPlugin(val global: Global) extends Plugin {
         m.isMethod && !m.isAccessor && m.hasAnnotation(reactAnnotation) && notInWrapper
       }
 
+      def isReactiveSet(target: Tree, method: TermName) = if (target.symbol == null) false else {
+        val m = target.symbol.info.member(method)
+        m.isSetter && m.accessed.hasAnnotation(reactAnnotation)
+      }
+
       override def transform(tree: Tree): Tree = tree match {
         case impl @ Template(parents, self, body) if currentClass.tpe <:< reactiveClass.tpe =>
           val clazz = impl.symbol.owner
@@ -154,23 +168,16 @@ class ReactressPlugin(val global: Global) extends Plugin {
               val muxname = newTermName(getter.name + "$mux")
 
               // find getter and instrument its body
-              val ctxname = newTermName("ctx")
-              val ctxsym = member.symbol.newValueParameter(ctxname, NoPosition, Flags.IMPLICIT).setInfo(ctxClass.tpe)
-              val implicitCtx = ValDef(ctxsym)
               val nrhs = Block(
                 List(
-                  rhs,
-                  Apply(
-                    Select(Select(This(clazz), muxname), newTermName("dispatch")),
-                    List(Ident(ctxname), This(clazz))
-                  )
+                  rhs
                 ),
                 Apply(
-                  Select(This(clazz), newTermName("flush")),
-                  List(Ident(ctxname))
+                  Select(Select(This(clazz), muxname), newTermName("dispatchOnDefault")),
+                  List(This(clazz))
                 )
               )
-              val nsetter = DefDef(mods, name, tps, vps :+ List(implicitCtx), tpt, nrhs)
+              val nsetter = DefDef(mods, name, tps, vps, tpt, nrhs)
               nsetter.symbol = member.symbol
 
               val nmember = localTyper.typed {

@@ -5,4 +5,6 @@ package org.reactress
 
 
 
-final class react extends scala.annotation.StaticAnnotation
+final class react(n: Nothing) extends scala.annotation.StaticAnnotation {
+  def this() = this(???)
+}

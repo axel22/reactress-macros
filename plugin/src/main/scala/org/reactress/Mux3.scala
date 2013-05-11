@@ -10,6 +10,12 @@ import java.lang.ref.{WeakReference => WeakRef}
 
 trait Mux3[Source <: Reactive, @spec(Int, Double) P, @spec(Int, Double) Q, @spec(Boolean, Int, Long, Double) R] extends Serializable {
 
+  def dispatchOnDefault(source: Source, mp: P, mq: Q, mr: R) = {
+    val ctx = Ctx.current()
+    dispatch(ctx, source, mp, mq, mr)
+    ctx.flush()
+  }
+
   def dispatch(ctx: Ctx, source: Source, mp: P, mq: Q, mr: R): Unit
 
   def add(mux: Mux3[Source, P, Q, R]): Mux3[Source, P, Q, R]
@@ -24,8 +30,9 @@ object Mux3 {
   def None[Source <: Reactive, @spec(Int, Double) P, @spec(Int, Double) Q, @spec(Boolean, Int, Long, Double) R] = NoneImpl.asInstanceOf[Mux3[Source, P, Q, R]]
 
   private case object NoneImpl extends Mux3[Reactive, Any, Any, Any] {
+    override def dispatchOnDefault(source: Reactive, mp: Any, mq: Any, mr: Any) {}
     def dispatch(ctx: Ctx, source: Reactive, mp: Any, mq: Any, mr: Any) {}
-    def add(mux: Mux3[Reactive, Any, Any, Any]) = new Composite().add(this)
+    def add(mux: Mux3[Reactive, Any, Any, Any]) = new Composite().add(mux)
     def remove(mux: Mux3[Reactive, Any, Any, Any]) = this
   }
 
