@@ -160,7 +160,7 @@ class ReactMap[@spec(Int, Long) K, V](
   def size: Int = sz
 
   def modified: Signal[Unit] = {
-    import signal._
+    import api._
     val su = map(update _)(()) {
       (k, v, u) => ()
     }

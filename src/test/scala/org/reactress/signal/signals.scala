@@ -5,6 +5,7 @@ package signal
 
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers
+import api._
 
 
 

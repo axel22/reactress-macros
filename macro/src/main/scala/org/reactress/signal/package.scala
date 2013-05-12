@@ -9,29 +9,9 @@ import scala.reflect.macros.Context
 
 package object signal {
 
-  /* signal constructors */
-
-  def constant[@specialized T](v: T): Signal[T] = new Signal[T] {
-    @react(source[Signal[T]]) var value = v
-    override def priority = 0
-    def detach() {}
-  }
-
-  def zip[P, Q, W](p: Signal[P], q: Signal[Q])(f: (P, Q) => W): Signal[W] = macro zipSignals[P, Q, W]
-
-  def either[P, Q, W](p: Signal[P], q: Signal[Q])(pf: P => W)(qf: Q => W): Signal[W] = macro eitherSignals[P, Q, W]
-
-  def either[P, Q, R, W](p: Signal[P], q: Signal[Q], r: Signal[R])(pf: P => W)(qf: Q => W)(rf: R => W): Signal[W] = macro eitherSignals3[P, Q, R, W]
-
   /* operations on signals */
 
   implicit def c2utils(c: Context) = new Util[c.type](c)
-
-  implicit class SignalOps[T](val signal: Signal[T]) extends AnyVal {
-    def map[S](f: T => S): Signal[S] = macro mapSignal[T, S]
-    def on[U](f: T => U): Signal[Unit] = macro onSignal[T, U]
-    def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = macro foldPastSignal[T, S]
-  }
 
   def eitherSignals3[P: c.WeakTypeTag, Q: c.WeakTypeTag, R: c.WeakTypeTag, W: c.WeakTypeTag](c: Context)(p: c.Expr[Signal[P]], q: c.Expr[Signal[Q]], r: c.Expr[Signal[R]])(pf: c.Expr[P => W])(qf: c.Expr[Q => W])(rf: c.Expr[R => W]): c.Expr[Signal[W]] = {
     import c.universe._

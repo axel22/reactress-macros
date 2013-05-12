@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 class ReactTileMap[@spec(Int, Long, Double) T: ClassTag](
   size0: Int,
   default0: T
-) extends Reactive {
+) extends Struct[ReactTileMap[T]] {
   import ReactTileMap._
 
   private var sz = nextPow2(size0)
@@ -25,13 +25,25 @@ class ReactTileMap[@spec(Int, Long, Double) T: ClassTag](
 
   def apply(x: Int, y: Int) = root.apply(x, y, size)
 
-  @react def update(x: Int, y: Int, elem: T) = {
+  @react def update(x: Int, y: Int, elem: T): Unit = {
     assert(x >= 0 && x < size && y >= 0 && y < size)
     root = root.update(x, y, size, implicitly[ClassTag[T]], default, elem)
   }
   
   @react def clear() = {
     root = new Node.Leaf(dflt)
+  }
+
+  def modified: Signal[Unit] = {
+    import api._
+    val su = map(update _)(()) {
+      (x, y, elem, u) => ()
+    }
+    val sc = map(clear _)(()) {
+      u => ()
+    }
+
+    either(su, sc) { u => } { u => }
   }
 
 }

@@ -77,7 +77,7 @@ class ReactMapSpec extends FlatSpec with ShouldMatchers {
   }
 
   it should "detect modifications" in {
-    import org.reactress.signal._
+    import org.reactress.api._
     val size = 32
     val table = new ReactMap[Long, String]
     val m = table.modified
