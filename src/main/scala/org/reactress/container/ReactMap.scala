@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 class ReactMap[@spec(Int, Long) K, V](
   implicit val emptyKey: ReactMap.Empty[K],
   implicit val emptyVal: ReactMap.Empty[V]
-) extends Reactive {
+) extends Struct[ReactMap[K, V]] {
   private var keytable: Array[K] = emptyKey.newEmptyArray(ReactMap.initSize)
   private var valtable: Array[V] = emptyVal.newEmptyArray(ReactMap.initSize)
   private var sz = 0
@@ -29,7 +29,7 @@ class ReactMap[@spec(Int, Long) K, V](
     else valtable(pos)
   }
 
-  private def insert(k: K, v: V, silent: Boolean = false): V = {
+  private def insert(k: K, v: V): V = {
     checkResize()
 
     var pos = index(k)
@@ -99,7 +99,7 @@ class ReactMap[@spec(Int, Long) K, V](
       while (pos < okeytable.length) {
         val curr = okeytable(pos)
         if (curr != nil) {
-          insert(curr, ovaltable(pos), true)
+          insert(curr, ovaltable(pos))
         }
 
         pos += 1
@@ -128,19 +128,14 @@ class ReactMap[@spec(Int, Long) K, V](
     case v => Some(v)
   }
 
+  def contains(key: K): Boolean = lookup(key) match {
+    case `emptyVal`.nil => false
+    case v => true
+  }
+
   @react def update(key: K, value: V): Unit = insert(key, value)
 
-  @react def put(key: K, value: V): Option[V] = insert(key, value) match {
-    case `emptyVal`.nil => None
-    case v => Some(v)
-  }
-
-  @react def remove(key: K): Option[V] = delete(key) match {
-    case `emptyVal`.nil => None
-    case v => Some(v)
-  }
-
-  @react def erase(key: K): Boolean = delete(key) match {
+  @react def remove(key: K): Boolean = delete(key) match {
     case `emptyVal`.nil => false
     case v => true
   }
@@ -163,6 +158,21 @@ class ReactMap[@spec(Int, Long) K, V](
   }
 
   def size: Int = sz
+
+  def modified: Signal[Unit] = {
+    import signal._
+    val su = map(update _)(()) {
+      (k, v, u) => ()
+    }
+    val sr = map(remove _)(()) {
+      (k, u) => ()
+    }
+    val sc = map(clear _)(()) {
+      u => ()
+    }
+
+    either(su, sr, sc) { u => } { u => } { u => }
+  }
 
 }
 

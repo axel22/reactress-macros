@@ -17,7 +17,7 @@ abstract class Ctx {
 
 object Ctx {
 
-  private def local = new ThreadLocal[Ctx] {
+  private val local = new ThreadLocal[Ctx] {
     override def initialValue = new Default
   }
 

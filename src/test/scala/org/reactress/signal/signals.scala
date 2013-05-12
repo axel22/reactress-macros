@@ -79,4 +79,29 @@ class SignalSpec extends FlatSpec with ShouldMatchers {
     rt.x += 1
   }
 
+  it should "be either" in {
+    val rt = new ReactiveTest
+    val sodd = rt.filter(rt.x)(1) {
+      rt.x % 2 == 1
+    }
+    val seven = rt.filter(rt.x)(0) {
+      rt.x % 2 == 0
+    }
+    val seither = either(sodd, seven) {
+      x => x
+    } {
+      x => x
+    }
+    val stream = seither.foldPast(List[Int]()) {
+      (acc, x) => x :: acc
+    }
+    val a = stream on {
+      xs => assert(xs.reverse == Stream.from(0).take(xs.length))
+    }
+
+    rt.x = 0
+    rt.x = 1
+    rt.x = 2
+  }
+
 }

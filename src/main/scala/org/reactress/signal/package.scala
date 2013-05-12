@@ -19,6 +19,10 @@ package object signal {
 
   def zip[P, Q, W](p: Signal[P], q: Signal[Q])(f: (P, Q) => W): Signal[W] = macro zipSignals[P, Q, W]
 
+  def either[P, Q, W](p: Signal[P], q: Signal[Q])(pf: P => W)(qf: Q => W): Signal[W] = macro eitherSignals[P, Q, W]
+
+  def either[P, Q, R, W](p: Signal[P], q: Signal[Q], r: Signal[R])(pf: P => W)(qf: Q => W)(rf: R => W): Signal[W] = macro eitherSignals3[P, Q, R, W]
+
   /* operations on signals */
 
   implicit def c2utils(c: Context) = new Util[c.type](c)
@@ -27,6 +31,91 @@ package object signal {
     def map[S](f: T => S): Signal[S] = macro mapSignal[T, S]
     def on[U](f: T => U): Signal[Unit] = macro onSignal[T, U]
     def foldPast[S](z: S)(op: (S, T) => S): Signal[S] = macro foldPastSignal[T, S]
+  }
+
+  def eitherSignals3[P: c.WeakTypeTag, Q: c.WeakTypeTag, R: c.WeakTypeTag, W: c.WeakTypeTag](c: Context)(p: c.Expr[Signal[P]], q: c.Expr[Signal[Q]], r: c.Expr[Signal[R]])(pf: c.Expr[P => W])(qf: c.Expr[Q => W])(rf: c.Expr[R => W]): c.Expr[Signal[W]] = {
+    import c.universe._
+
+    val s = reify {
+      val psrc = p.splice
+      val qsrc = q.splice
+      val rsrc = r.splice
+      val es = new Signal.M0[Signal[Any], W](pf.splice(psrc.value)) with Deferrable {
+        val psource = psrc
+        val qsource = qsrc
+        val rsource = rsrc
+        var deferred = false
+        override val priority = {
+          def max(a: Int, b: Int) = if (a > b) a else b
+          val pp = psource.priority
+          val qp = qsource.priority
+          val rp = rsource.priority
+          1 + max(pp, max(qp, rp))
+        }
+        def dispatch(ctx: Ctx, source: Signal[Any]) {
+          if (!deferred) {
+            deferred = true
+            ctx.defer(this)
+            if (source eq psource) set(pf.splice(psource.value), ctx)
+            else if (source eq qsource) set(qf.splice(qsource.value), ctx)
+            else set(rf.splice(rsource.value), ctx)
+          }
+        }
+        def execute(ctx: Ctx) {
+          deferred = false
+        }
+        def detach() {
+          psource.value$mux = psource.value$mux.remove(this.asMux)
+          qsource.value$mux = qsource.value$mux.remove(this.asMux)
+          rsource.value$mux = rsource.value$mux.remove(this.asMux)
+        }
+      }
+      psrc.value$mux = psrc.value$mux.add(es.asMux)
+      qsrc.value$mux = qsrc.value$mux.add(es.asMux)
+      rsrc.value$mux = rsrc.value$mux.add(es.asMux)
+      es
+    }
+
+    c.inlineAndReset[Signal[W]](s)
+  }
+
+  def eitherSignals[P: c.WeakTypeTag, Q: c.WeakTypeTag, W: c.WeakTypeTag](c: Context)(p: c.Expr[Signal[P]], q: c.Expr[Signal[Q]])(pf: c.Expr[P => W])(qf: c.Expr[Q => W]): c.Expr[Signal[W]] = {
+    import c.universe._
+
+    val s = reify {
+      val psrc = p.splice
+      val qsrc = q.splice
+      val es = new Signal.M0[Signal[Any], W](pf.splice(psrc.value)) with Deferrable {
+        val psource = psrc
+        val qsource = qsrc
+        var deferred = false
+        override val priority = {
+          val pp = psource.priority
+          val qp = qsource.priority
+          1 + (if (pp > qp) pp else qp)
+        }
+        def dispatch(ctx: Ctx, source: Signal[Any]) {
+          if (!deferred) {
+            deferred = true
+            ctx.defer(this)
+            if (source eq psource) set(pf.splice(psource.value), ctx)
+            else set(qf.splice(qsource.value), ctx)
+          }
+        }
+        def execute(ctx: Ctx) {
+          deferred = false
+        }
+        def detach() {
+          psource.value$mux = psource.value$mux.remove(this.asMux)
+          qsource.value$mux = qsource.value$mux.remove(this.asMux)
+        }
+      }
+      psrc.value$mux = psrc.value$mux.add(es.asMux)
+      qsrc.value$mux = qsrc.value$mux.add(es.asMux)
+      es
+    }
+
+    c.inlineAndReset[Signal[W]](s)
   }
 
   def zipSignals[P: c.WeakTypeTag, Q: c.WeakTypeTag, W: c.WeakTypeTag](c: Context)(p: c.Expr[Signal[P]], q: c.Expr[Signal[Q]])(f: c.Expr[(P, Q) => W]): c.Expr[Signal[W]] = {
@@ -70,7 +159,7 @@ package object signal {
   def foldPastSignal[T: c.WeakTypeTag, S: c.WeakTypeTag](c: Context)(z: c.Expr[S])(op: c.Expr[(S, T) => S]): c.Expr[Signal[S]] = {
     import c.universe._
 
-    val Apply(TypeApply(Select(Apply(_, List(signal)), _), _), _) = c.macroApplication
+    val Apply(Apply(TypeApply(Select(Apply(_, List(signal)), _), _), _), _) = c.macroApplication
     val field = reify {
       (c.Expr[Signal[T]](signal)).splice.value
     }

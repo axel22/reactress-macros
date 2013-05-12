@@ -29,6 +29,8 @@ trait Struct[Source <: Reactive] extends Reactive {
 
 object Struct {
 
+  /* macros */
+
   implicit def c2utils(c: Context) = new Util[c.type](c)
 
   def foldField[Source <: Reactive: c.WeakTypeTag, T: c.WeakTypeTag, U: c.WeakTypeTag](c: Context)(field: c.Expr[T])(init: c.Expr[U])(op: c.Expr[(U, T) => U]): c.Expr[Signal[U]] = {
