@@ -60,4 +60,23 @@ class SignalSpec extends FlatSpec with ShouldMatchers {
     rt.x = 5
   }
 
+  it should "be zipped" in {
+    val rt = new ReactiveTest
+    val sp1 = rt.map(rt.x) {
+      rt.x + 1
+    }
+    val sp2 = sp1 map {
+      _ + 1
+    }
+    val sdiff = zip(sp2, sp1) {
+      _ - _
+    }
+    val a = sdiff on { d =>
+      assert(d == 1)
+    }
+
+    rt.x += 1
+    rt.x += 1
+  }
+
 }

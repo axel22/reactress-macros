@@ -14,6 +14,8 @@ extends Reactive {
 
   var value$mux: Mux0[Signal[T]]
 
+  def asMux[M] = this.asInstanceOf[M]
+
   def set(v: T, ctx: Ctx) {
     value = v
     value$mux.dispatch(ctx, this)

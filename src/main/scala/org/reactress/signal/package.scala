@@ -44,8 +44,6 @@ package object signal {
           val qp = qsource.priority
           1 + (if (pp > qp) pp else qp)
         }
-        def asP = this.asInstanceOf[Mux0[Signal[P]]]
-        def asQ = this.asInstanceOf[Mux0[Signal[Q]]]
         def dispatch(ctx: Ctx, source: Signal[Any]) {
           if (!deferred) {
             deferred = true
@@ -54,15 +52,15 @@ package object signal {
         }
         def execute(ctx: Ctx) {
           deferred = false
-          value = f.splice(psource.value, qsource.value)
+          set(f.splice(psource.value, qsource.value), ctx)
         }
         def detach() {
-          psource.value$mux = psource.value$mux.remove(asP)
-          qsource.value$mux = qsource.value$mux.remove(asQ)
+          psource.value$mux = psource.value$mux.remove(this.asMux)
+          qsource.value$mux = qsource.value$mux.remove(this.asMux)
         }
       }
-      psrc.value$mux = psrc.value$mux.add(s.asP)
-      qsrc.value$mux = qsrc.value$mux.add(s.asQ)
+      psrc.value$mux = psrc.value$mux.add(s.asMux)
+      qsrc.value$mux = qsrc.value$mux.add(s.asMux)
       s
     }
 
