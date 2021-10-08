@@ -1,6 +1,0 @@
-Goals:
- ☐ composite triggers dsl
- ☐ continuation-based trigger dsl
- ☐ `snapshot` sections
- ☐ selective muxes
- 
